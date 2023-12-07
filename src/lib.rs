@@ -3,7 +3,7 @@
 pub mod parser {
     use nom::{
         branch::alt,
-        bytes::complete::{tag, take},
+        bytes::complete::{tag_no_case, take},
         character::complete::one_of,
         error::{Error, ErrorKind},
         multi::{many1, many_till},
@@ -12,15 +12,15 @@ pub mod parser {
 
     pub fn parse_spelled_digit(input: &str) -> IResult<&str, i64> {
         let (rest, num) = alt((
-            tag("one"),
-            tag("two"),
-            tag("three"),
-            tag("four"),
-            tag("five"),
-            tag("six"),
-            tag("seven"),
-            tag("eight"),
-            tag("nine"),
+            tag_no_case("one"),
+            tag_no_case("two"),
+            tag_no_case("three"),
+            tag_no_case("four"),
+            tag_no_case("five"),
+            tag_no_case("six"),
+            tag_no_case("seven"),
+            tag_no_case("eight"),
+            tag_no_case("nine"),
         ))(input)?;
 
         let num = match num {
