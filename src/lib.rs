@@ -3,7 +3,7 @@
 pub mod parser {
     use nom::{
         branch::alt,
-        bytes::complete::tag,
+        bytes::complete::{tag, take},
         character::complete::one_of,
         error::{self, ErrorKind},
         multi::{many1, many_till},
@@ -51,28 +51,8 @@ pub mod parser {
         alt((parse_spelled_digit, parse_literal_digit))(input)
     }
 
-    pub fn parse_glob(input: &str) -> IResult<&str, &str> {
-        let mut char_iter = input.char_indices();
-        let mut ch = char_iter.next();
-        let mut res = parse_digit(char_iter.as_str());
-        while res.is_err() && ch.is_some() {
-            ch = char_iter.next();
-            res = parse_digit(char_iter.as_str());
-        }
-
-        if ch.is_some() {
-            ch = char_iter.next();
-        }
-
-        if let Some((idx, _)) = ch {
-            Ok((&input[idx..], &input[..idx]))
-        } else {
-            Ok(("", input))
-        }
-    }
-
     pub fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
-        let (rest, (_, digit)) = many_till(parse_glob, parse_digit)(input)?;
+        let (rest, (_, digit)) = many_till(take(1usize), parse_digit)(input)?;
         Ok((rest, digit))
     }
 
