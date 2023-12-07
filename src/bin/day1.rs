@@ -4,6 +4,7 @@ use nom::{
     multi::{many1, many_till},
     IResult,
 };
+use rayon::prelude::*;
 use std::io;
 
 fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
@@ -19,11 +20,9 @@ fn parse_line(input: &str) -> IResult<&str, i64> {
 }
 
 pub fn main() {
-    let stdin = io::stdin();
-    let sum: i64 = stdin
-        .lines()
-        .filter(Result::is_ok)
-        .map(Result::unwrap)
+    let lines: Vec<String> = io::stdin().lines().flatten().collect();
+    let sum: i64 = lines
+        .par_iter()
         .map(|line| parse_line(&line).ok().map(|(_, num)| num))
         .flatten()
         .sum();

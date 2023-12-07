@@ -4,7 +4,7 @@ pub mod parser {
     use nom::{
         branch::alt,
         bytes::complete::tag,
-        character::complete::{alpha0, one_of},
+        character::complete::one_of,
         error::{self, ErrorKind},
         multi::{many1, many_till},
         IResult,
@@ -51,8 +51,28 @@ pub mod parser {
         alt((parse_spelled_digit, parse_literal_digit))(input)
     }
 
+    pub fn parse_glob(input: &str) -> IResult<&str, &str> {
+        let mut char_iter = input.char_indices();
+        let mut ch = char_iter.next();
+        let mut res = parse_digit(char_iter.as_str());
+        while res.is_err() && ch.is_some() {
+            ch = char_iter.next();
+            res = parse_digit(char_iter.as_str());
+        }
+
+        if ch.is_some() {
+            ch = char_iter.next();
+        }
+
+        if let Some((idx, _)) = ch {
+            Ok((&input[idx..], &input[..idx]))
+        } else {
+            Ok(("", input))
+        }
+    }
+
     pub fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
-        let (rest, (_, digit)) = many_till(alpha0, parse_digit)(input)?;
+        let (rest, (_, digit)) = many_till(parse_glob, parse_digit)(input)?;
         Ok((rest, digit))
     }
 
@@ -60,6 +80,7 @@ pub mod parser {
         let (_, first_digit) = parse_glob_then_digit(input)?;
         let (_, second_digit) = many1(parse_glob_then_digit)(input)?;
         let second_digit = second_digit.last().unwrap();
+        println!("{input} {:?}", first_digit * 10 + second_digit);
         Ok(("", first_digit * 10 + second_digit))
     }
 }
