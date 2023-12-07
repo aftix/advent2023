@@ -1,21 +1,19 @@
 use std::io;
 
 use nom::{
-    bytes::complete::is_a, character::complete::alpha0, multi::many1, sequence::preceded, IResult,
+    character::complete::{alpha0, one_of},
+    multi::many1,
+    sequence::preceded,
+    IResult,
 };
 
 fn parse_line(input: &str) -> IResult<&str, i64> {
-    let (_, first_digit) = preceded(alpha0, is_a("0123456789"))(input)?;
-    let (_, second_digit) = many1(preceded(alpha0, is_a("0123456789")))(input)?;
+    let (_, first_digit) = preceded(alpha0, one_of("0123456789"))(input)?;
+    let (_, second_digit) = many1(preceded(alpha0, one_of("0123456789")))(input)?;
     let second_digit = second_digit.last().unwrap();
-
     Ok((
         "",
-        first_digit
-            .chars()
-            .chain(second_digit.chars())
-            .map(|c| c.to_digit(10).unwrap() as i64)
-            .fold(0 as i64, |acc, elem| acc * 10 + elem),
+        (first_digit.to_digit(10).unwrap() * 10 + second_digit.to_digit(10).unwrap()) as i64,
     ))
 }
 
