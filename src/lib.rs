@@ -5,9 +5,9 @@ pub mod parser {
         branch::alt,
         bytes::complete::{tag, take},
         character::complete::one_of,
-        error::{self, ErrorKind},
+        error::{Error, ErrorKind},
         multi::{many1, many_till},
-        IResult,
+        Err as nErr, IResult,
     };
 
     pub fn parse_spelled_digit(input: &str) -> IResult<&str, i64> {
@@ -33,7 +33,7 @@ pub mod parser {
             "seven" => 7,
             "eight" => 8,
             "nine" => 9,
-            _ => return Err(nom::Err::Failure(error::Error::new(rest, ErrorKind::Alt))),
+            _ => return Err(nErr::Failure(Error::new(rest, ErrorKind::Digit))),
         };
 
         Ok((rest, num))
@@ -43,7 +43,7 @@ pub mod parser {
         let (rest, num) = one_of("123456789")(input)?;
         match num.to_digit(10) {
             Some(num) => Ok((rest, num as i64)),
-            None => Err(nom::Err::Failure(error::Error::new(rest, ErrorKind::Char))),
+            None => Err(nom::Err::Failure(Error::new(rest, ErrorKind::Digit))),
         }
     }
 
