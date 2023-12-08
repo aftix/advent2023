@@ -58,158 +58,88 @@ pub fn parse_line(input: &str) -> IResult<&str, Game> {
 
 #[cfg(test)]
 mod test {
-    use ntest::test_case;
+    use test_case::test_case;
 
-    #[test_case("Game 0:", 0, "")]
-    #[test_case("Game 10:", 10, "")]
-    #[test_case("Game 0:a", 0, "a")]
-    #[test_case("Game 10:a", 10, "a")]
-    #[test_case("Game 0", 0, "")]
-    #[should_panic]
-    #[test_case("Game ", 0, "")]
-    #[should_panic]
-    #[test_case("", 0, "")]
-    #[should_panic]
-    fn game_id(input: &str, id: i64, remains: &str) {
+    #[test_case("Game 0:" => (0, ""))]
+    #[test_case("Game 10:" => (10, ""))]
+    #[test_case("Game 0:a" => (0, "a"))]
+    #[test_case("Game 10:a" => (10, "a"))]
+    fn game_id(input: &str) -> (i64, &str) {
         let (rest, num) = super::parse_game_id(input).unwrap();
-        assert_eq!(id, num);
-        assert_eq!(remains, rest);
+        (num, rest)
     }
 
-    #[test_case("1 red", 1, 0, 0, "")]
-    #[test_case("1 green", 0, 1, 0, "")]
-    #[test_case("1 blue", 0, 0, 1, "")]
-    #[test_case("10 red", 10, 0, 0, "")]
-    #[test_case("10 green", 0, 10, 0, "")]
-    #[test_case("10 blue", 0, 0, 10, "")]
-    #[test_case("1 red, ", 1, 0, 0, ", ")]
-    #[test_case("", 0, 0, 0, "")]
+    #[test_case("Game 0" ; "when no colon")]
+    #[test_case("Game " ; "when no number")]
+    #[test_case("" ; "when empty")]
     #[should_panic]
-    #[test_case("a.eueou", 0, 0, 0, "")]
-    #[should_panic]
-    fn game_cubes(input: &str, red: i64, green: i64, blue: i64, remains: &str) {
+    fn game_id_panics(input: &str) {
+        super::parse_game_id(input).unwrap();
+    }
+
+    #[test_case("1 red" => ((1, 0, 0), "") ; "when 1 red")]
+    #[test_case("1 green" => ((0, 1, 0), "") ; "when 1 green")]
+    #[test_case("1 blue" => ((0, 0, 1), "") ; "when 1 blue")]
+    #[test_case("10 red" => ((10, 0, 0), "") ; "when 10 red")]
+    #[test_case("10 green" => ((0, 10, 0), "") ; "when 10 green")]
+    #[test_case("10 blue" => ((0, 0, 10), "") ; "when 10 blue")]
+    #[test_case("1 red, " => ((1, 0, 0), ", ") ; "when trailing comma")]
+    fn game_cubes(input: &str) -> ((i64, i64, i64), &str) {
         let (rest, set) = super::parse_game_cubes(input).unwrap();
-        assert_eq!(red, set.red);
-        assert_eq!(green, set.green);
-        assert_eq!(blue, set.blue);
-        assert_eq!(remains, rest);
+        ((set.red, set.green, set.blue), rest)
     }
 
-    #[test_case("1 red", 1, 0, 0, "")]
-    #[test_case("1 green", 0, 1, 0, "")]
-    #[test_case("1 blue", 0, 0, 1, "")]
-    #[test_case("10 red", 10, 0, 0, "")]
-    #[test_case("10 green", 0, 10, 0, "")]
-    #[test_case("10 blue", 0, 0, 10, "")]
-    #[test_case("1 red, 1 blue", 1, 0, 1, "")]
-    #[test_case("1 red, 1 green", 1, 1, 0, "")]
-    #[test_case("10 green, 3 blue", 0, 10, 3, "")]
-    #[test_case("1 red;", 1, 0, 0, ";")]
-    #[test_case("", 0, 0, 0, "")]
+    #[test_case("" ; "when empty")]
+    #[test_case("a.eueou" ; "when nonsense")]
     #[should_panic]
-    #[test_case("a.eueou", 0, 0, 0, "")]
-    #[should_panic]
-    fn game_set(input: &str, red: i64, green: i64, blue: i64, remains: &str) {
+    fn game_cubes_panics(input: &str) {
+        super::parse_game_cubes(input).unwrap();
+    }
+
+    #[test_case("1 red" => ((1, 0, 0), "") ; "when 1 red")]
+    #[test_case("1 green" => ((0, 1, 0), "") ; "when 1 green")]
+    #[test_case("1 blue" => ((0, 0, 1), "") ; "when 1 blue")]
+    #[test_case("10 red" => ((10, 0, 0), "") ; "when 10 red")]
+    #[test_case("10 green" => ((0, 10, 0), "") ; "when 10 green")]
+    #[test_case("10 blue" => ((0, 0, 10), "") ; "when 10 blue")]
+    #[test_case("1 red, 1 blue" => ((1, 0, 1), "") ; "when red blue")]
+    #[test_case("1 red, 1 green" => ((1, 1, 0), "") ; "when red green")]
+    #[test_case("10 green, 3 blue" => ((0, 10, 3), "") ; "when green blue")]
+    #[test_case("1 red;" => ((1, 0, 0), ";") ; "when trailing semicolon")]
+    fn game_set(input: &str) -> ((i64, i64, i64), &str) {
         let (rest, set) = super::parse_game_set(input).unwrap();
-        assert_eq!(red, set.red);
-        assert_eq!(green, set.green);
-        assert_eq!(blue, set.blue);
-        assert_eq!(remains, rest);
+        ((set.red, set.green, set.blue), rest)
     }
 
-    #[test]
-    fn game_rounds() {
-        use crate::types::GameSet;
+    #[test_case("" ; "when empty")]
+    #[test_case("a.eueou" ; "when nonsense")]
+    #[should_panic]
+    fn game_set_panics(input: &str) {
+        super::parse_game_set(input).unwrap();
+    }
 
-        let inputs = vec![
-            "1 red",
-            "1 green",
-            "1 blue",
-            "10 red",
-            "10 green",
-            "10 blue",
-            "1 red, 1 blue",
-            "1 red, 1 green",
-            "10 green, 3 blue",
-            "1 red; 1 blue",
-            "1 red, 1 blue; 1 green, 1 blue",
-        ];
+    use crate::types::GameSet;
 
-        let outputs = vec![
-            vec![GameSet {
-                red: 1,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                green: 1,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                blue: 1,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                red: 10,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                green: 10,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                blue: 10,
-                ..Default::default()
-            }],
-            vec![GameSet {
-                red: 1,
-                green: 0,
-                blue: 1,
-            }],
-            vec![GameSet {
-                red: 1,
-                green: 1,
-                blue: 0,
-            }],
-            vec![GameSet {
-                red: 0,
-                green: 10,
-                blue: 3,
-            }],
-            vec![
-                GameSet {
-                    red: 1,
-                    ..Default::default()
-                },
-                GameSet {
-                    blue: 1,
-                    ..Default::default()
-                },
-            ],
-            vec![
-                GameSet {
-                    red: 1,
-                    green: 0,
-                    blue: 1,
-                },
-                GameSet {
-                    red: 0,
-                    green: 1,
-                    blue: 1,
-                },
-            ],
-        ];
+    #[test_case("1 red" => vec![GameSet {red: 1, ..Default::default()}] ; "rounds 1 red")]
+    #[test_case("1 green" => vec![GameSet {green: 1, ..Default::default()}] ; "rounds 1 green")]
+    #[test_case("1 blue" => vec![GameSet {blue: 1, ..Default::default()}] ; "rounds 1 blue")]
+    #[test_case("10 red" => vec![GameSet {red: 10, ..Default::default()}] ; "rounds 10 red")]
+    #[test_case("10 green" => vec![GameSet {green: 10, ..Default::default()}] ; "rounds 10 green")]
+    #[test_case("10 blue" => vec![GameSet {blue: 10, ..Default::default()}] ; "rounds 10 blue")]
+    #[test_case("1 red, 1 blue" => vec![GameSet {red: 1, green: 0, blue: 1}] ; "rounds 1 red 1 blue")]
+    #[test_case("1 red, 1 green" => vec![GameSet{red: 1, green: 1, blue: 0}] ; "rounds 1 red 1 green")]
+    #[test_case("10 green, 3 blue" => vec![GameSet{red: 0, green: 10, blue: 3}] ; "ronuds 10 green 3 blue")]
+    #[test_case("1 red; 1 blue" => vec![GameSet {red: 1, ..Default::default()}, GameSet {blue: 1, ..Default::default()}] ; "rounds 1 red then 1 blue")]
+    #[test_case("1 red, 1 blue; 1 green, 1 blue" => vec![GameSet {red: 1, green: 0, blue: 1}, GameSet {red: 0, green: 1, blue: 1}] ; "rounds 1 red 1 blue then 1 green 1 blue")]
+    fn game_rounds(input: &str) -> Vec<GameSet> {
+        super::parse_game_rounds(input).unwrap().1
+    }
 
-        for (inp, out) in inputs.iter().zip(outputs.iter()) {
-            let res = super::parse_game_rounds(inp);
-            assert!(res.is_ok());
-            let (_, vec) = res.unwrap();
-            assert_eq!(out, &vec);
-        }
-
-        let errs = vec!["", ";", ",", "aeouaeu"];
-
-        for err in errs {
-            assert!(super::parse_game_rounds(err).is_err());
-        }
+    #[test_case("" ; "when empty")]
+    #[test_case(";" ; "when no blocks")]
+    #[test_case("," ; "when stray comma")]
+    #[should_panic]
+    fn game_rounds_panics(input: &str) {
+        super::parse_game_rounds(input).unwrap();
     }
 }

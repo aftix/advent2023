@@ -64,7 +64,7 @@ pub fn parse_digit(input: &str) -> IResult<&str, i64> {
 #[cfg(test)]
 mod test {
     use nom::character::is_alphabetic;
-    use ntest::test_case;
+    use test_case::test_case;
 
     #[test_case("1", 1)]
     #[test_case("2", 2)]
@@ -75,88 +75,97 @@ mod test {
     #[test_case("7", 7)]
     #[test_case("8", 8)]
     #[test_case("9", 9)]
-    #[test_case("", 0)]
-    #[should_panic]
-    #[test_case("one", 0)]
-    #[should_panic]
-    #[test_case("!@#$@#", 0)]
-    #[should_panic]
     fn parse_literal_digit(input: &str, output: i64) {
         let (_, num) = super::parse_literal_digit(input).unwrap();
         assert_eq!(output, num);
     }
 
-    #[test_case("1", 1, "")]
-    #[test_case("2", 2, "")]
-    #[test_case("3", 3, "")]
-    #[test_case("4", 4, "")]
-    #[test_case("5", 5, "")]
-    #[test_case("6", 6, "")]
-    #[test_case("7", 7, "")]
-    #[test_case("8", 8, "")]
-    #[test_case("9", 9, "")]
-    #[test_case("9a", 9, "a")]
-    #[test_case("134", 134, "")]
-    #[test_case("", 0, "")]
+    #[test_case("" ; "when empty")]
+    #[test_case("one" ; "when written in english")]
+    #[test_case("!@#$@#" ; "when symbols")]
     #[should_panic]
-    #[test_case("one", 0, "")]
-    #[should_panic]
-    #[test_case("!@#$@#", 0, "")]
-    #[should_panic]
-    fn parse_int(input: &str, output: i64, remains: &str) {
+    fn parse_literal_digit_panics(input: &str) {
+        super::parse_literal_digit(input).unwrap();
+    }
+
+    #[test_case("1", 1 => "")]
+    #[test_case("2", 2 => "")]
+    #[test_case("3", 3 => "")]
+    #[test_case("4", 4 => "")]
+    #[test_case("5", 5 => "")]
+    #[test_case("6", 6 => "")]
+    #[test_case("7", 7 => "")]
+    #[test_case("8", 8 => "")]
+    #[test_case("9", 9 => "")]
+    #[test_case("9a", 9 => "a")]
+    #[test_case("134", 134 => "")]
+    fn parse_int(input: &str, output: i64) -> &str {
         let (rest, num) = super::parse_int(input).unwrap();
         assert_eq!(output, num);
-        assert_eq!(remains, rest);
+        rest
     }
 
-    #[test_case("one", 1)]
-    #[test_case("two", 2)]
-    #[test_case("three", 3)]
-    #[test_case("four", 4)]
-    #[test_case("five", 5)]
-    #[test_case("six", 6)]
-    #[test_case("seven", 7)]
-    #[test_case("eight", 8)]
-    #[test_case("nine", 9)]
-    #[test_case("", 0)]
+    #[test_case("" ; "when empty")]
+    #[test_case("one" ; "when written in english")]
+    #[test_case("!@#$@#" ; "when symbols")]
     #[should_panic]
-    #[test_case("1", 0)]
-    #[should_panic]
-    #[test_case("!@#$@#", 0)]
-    #[should_panic]
-    fn parse_spelled_digit(input: &str, output: i64) {
+    fn parse_int_panics(input: &str) {
+        super::parse_int(input).unwrap();
+    }
+
+    #[test_case("one" => 1)]
+    #[test_case("two" => 2)]
+    #[test_case("three" => 3)]
+    #[test_case("four" => 4)]
+    #[test_case("five" => 5)]
+    #[test_case("six" => 6)]
+    #[test_case("seven" => 7)]
+    #[test_case("eight" => 8)]
+    #[test_case("nine" => 9)]
+    fn parse_spelled_digit(input: &str) -> i64 {
         let (rest, num) = super::parse_spelled_digit(input).unwrap();
         assert_eq!(input.chars().last(), rest.chars().next());
-        assert_eq!(output, num);
+        num
     }
 
-    #[test_case("one", 1)]
-    #[test_case("two", 2)]
-    #[test_case("three", 3)]
-    #[test_case("four", 4)]
-    #[test_case("five", 5)]
-    #[test_case("six", 6)]
-    #[test_case("seven", 7)]
-    #[test_case("eight", 8)]
-    #[test_case("nine", 9)]
-    #[test_case("1", 1)]
-    #[test_case("2", 2)]
-    #[test_case("3", 3)]
-    #[test_case("4", 4)]
-    #[test_case("5", 5)]
-    #[test_case("6", 6)]
-    #[test_case("7", 7)]
-    #[test_case("8", 8)]
-    #[test_case("9", 9)]
-    #[test_case("", 0)]
+    #[test_case("" ; "when empty")]
+    #[test_case("1" ; "when numeric")]
+    #[test_case("!@#$@#" ; "when symbols")]
     #[should_panic]
-    #[test_case("!@#$@#", 0)]
-    #[should_panic]
-    fn parse_digit(input: &str, output: i64) {
+    fn parse_spelled_digit_panics(input: &str) {
+        super::parse_spelled_digit(input).unwrap();
+    }
+
+    #[test_case("one" => 1)]
+    #[test_case("two" => 2)]
+    #[test_case("three" => 3)]
+    #[test_case("four" => 4)]
+    #[test_case("five" => 5)]
+    #[test_case("six" => 6)]
+    #[test_case("seven" => 7)]
+    #[test_case("eight" => 8)]
+    #[test_case("nine" => 9)]
+    #[test_case("1" => 1)]
+    #[test_case("2" => 2)]
+    #[test_case("3" => 3)]
+    #[test_case("4" => 4)]
+    #[test_case("5" => 5)]
+    #[test_case("6" => 6)]
+    #[test_case("7" => 7)]
+    #[test_case("8" => 8)]
+    #[test_case("9" => 9)]
+    fn parse_digit(input: &str) -> i64 {
         let (rest, num) = super::parse_digit(input).unwrap();
         if is_alphabetic(input.as_bytes()[0]) {
             assert_eq!(input.chars().last(), rest.chars().next());
         }
-        assert_eq!(output, num);
+        num
+    }
+
+    #[test_case("" ; "when empty")]
+    #[test_case("!@#$@#" ; "when symbols")]
+    #[should_panic]
+    fn parse_digit_panics(input: &str) {
+        super::parse_digit(input).unwrap();
     }
 }

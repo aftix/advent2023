@@ -19,87 +19,91 @@ pub fn parse_line(input: &str) -> IResult<&str, i64> {
 
 #[cfg(test)]
 mod test {
-    use ntest::test_case;
+    use test_case::test_case;
 
-    #[test_case("one", 1, true)]
-    #[test_case("two", 2, true)]
-    #[test_case("three", 3, true)]
-    #[test_case("four", 4, true)]
-    #[test_case("five", 5, true)]
-    #[test_case("six", 6, true)]
-    #[test_case("seven", 7, true)]
-    #[test_case("eight", 8, true)]
-    #[test_case("nine", 9, true)]
-    #[test_case("1", 1, false)]
-    #[test_case("2", 2, false)]
-    #[test_case("3", 3, false)]
-    #[test_case("4", 4, false)]
-    #[test_case("5", 5, false)]
-    #[test_case("6", 6, false)]
-    #[test_case("7", 7, false)]
-    #[test_case("8", 8, false)]
-    #[test_case("9", 9, false)]
-    #[test_case("aeouaueone", 1, true)]
-    #[test_case("aeuaeou3", 3, false)]
-    #[test_case("", 0, false)]
-    #[should_panic]
-    #[test_case("!@#$@#", 0, false)]
-    #[should_panic]
-    fn parse_glob_then_digit(input: &str, output: i64, spelled: bool) {
+    #[test_case("one", true => 1)]
+    #[test_case("two", true => 2)]
+    #[test_case("three", true => 3)]
+    #[test_case("four", true => 4)]
+    #[test_case("five", true => 5)]
+    #[test_case("six", true => 6)]
+    #[test_case("seven", true => 7)]
+    #[test_case("eight", true => 8)]
+    #[test_case("nine", true => 9)]
+    #[test_case("1", false => 1)]
+    #[test_case("2", false => 2)]
+    #[test_case("3", false => 3)]
+    #[test_case("4", false => 4)]
+    #[test_case("5", false => 5)]
+    #[test_case("6", false => 6)]
+    #[test_case("7", false => 7)]
+    #[test_case("8", false => 8)]
+    #[test_case("9", false => 9)]
+    #[test_case("aeouaueone", true => 1)]
+    #[test_case("aeuaeou3", false => 3)]
+    fn parse_glob_then_digit(input: &str, spelled: bool) -> i64 {
         let (rest, num) = super::parse_glob_then_digit(input).unwrap();
         if spelled {
             assert_eq!(input.chars().last(), rest.chars().next());
         }
-        assert_eq!(output, num);
+        num
     }
 
-    #[test_case("12", 1, 2)]
-    #[test_case("onetwo", 1, 2)]
-    #[test_case("one2", 1, 2)]
-    #[test_case("1two", 1, 2)]
-    #[test_case("twone", 2, 1)]
-    #[test_case(" 12", 1, 2)]
-    #[test_case(" onetwo", 1, 2)]
-    #[test_case(" one2", 1, 2)]
-    #[test_case(" 1two", 1, 2)]
-    #[test_case(" twone", 2, 1)]
-    #[test_case("aaeaou12", 1, 2)]
-    #[test_case("aaeaouonetwo", 1, 2)]
-    #[test_case("aaeaouone2", 1, 2)]
-    #[test_case("aaeaou1two", 1, 2)]
-    #[test_case("aaeaoutwone", 2, 1)]
-    #[test_case("12 ", 1, 2)]
-    #[test_case("onetwo ", 1, 2)]
-    #[test_case("one2 ", 1, 2)]
-    #[test_case("1two ", 1, 2)]
-    #[test_case("twone ", 2, 1)]
-    #[test_case("12eaouaoeu", 1, 2)]
-    #[test_case("onetwoaeoue", 1, 2)]
-    #[test_case("one2aeoue", 1, 2)]
-    #[test_case("1twoaeoue", 1, 2)]
-    #[test_case("twoneaeoue", 2, 1)]
-    #[test_case("1 2", 1, 2)]
-    #[test_case("one two", 1, 2)]
-    #[test_case("one 2", 1, 2)]
-    #[test_case("1 two", 1, 2)]
-    #[test_case("1aoeueoau2", 1, 2)]
-    #[test_case("oneaoeueoautwo", 1, 2)]
-    #[test_case("oneaoeueoau2", 1, 2)]
-    #[test_case("1aoeueoautwo", 1, 2)]
-    #[test_case(" 1 2 ", 1, 2)]
-    #[test_case(" one two ", 1, 2)]
-    #[test_case(" one 2 ", 1, 2)]
-    #[test_case(" 1 two ", 1, 2)]
-    #[test_case("", 0, 0)]
+    #[test_case("" ; "when empty")]
+    #[test_case("!@#$@#" ; "when symbols")]
     #[should_panic]
-    #[test_case("abc", 0, 0)]
-    #[should_panic]
-    #[test_case("one", 0, 0)]
-    #[should_panic]
-    fn multiple_digits(input: &str, first: i64, second: i64) {
+    fn parse_glob_then_digit_panics(input: &str) {
+        super::parse_glob_then_digit(input).unwrap();
+    }
+
+    #[test_case("12" => (1, 2) ; "when numeric")]
+    #[test_case("onetwo" => (1, 2) ; "when alphabetic")]
+    #[test_case("one2" => (1, 2) ; "when alphabetic numeric")]
+    #[test_case("1two" => (1, 2) ; "when numeric alphabetic")]
+    #[test_case("twone" => (2, 1) ; "when ovelapping")]
+    #[test_case(" 12" => (1, 2) ; "when numeric prefix space")]
+    #[test_case(" onetwo" => (1, 2) ; "when alphabetic prefix space")]
+    #[test_case(" one2" => (1, 2) ; "when alphabetic numeric prefix space")]
+    #[test_case(" 1two" => (1, 2) ; "when numeric alphabetic prefix space")]
+    #[test_case(" twone" => (2, 1) ; "when overlapping prefix space")]
+    #[test_case("aaeaou12" => (1, 2) ; "when numeric prefix")]
+    #[test_case("aaeaouonetwo" => (1, 2) ; "when alphabetic prefix")]
+    #[test_case("aaeaouone2" => (1, 2) ; "when alphabetic numeric prefix")]
+    #[test_case("aaeaou1two" => (1, 2) ; "when numeric alphabetic prefix")]
+    #[test_case("aaeaoutwone" => (2, 1) ; "when overlapping prefix")]
+    #[test_case("12 " => (1, 2) ; "when numeric suffix space")]
+    #[test_case("onetwo " => (1, 2) ; "when alphabetic suffix space")]
+    #[test_case("one2 " => (1, 2) ; "when alphabetic numeric suffix space")]
+    #[test_case("1two " => (1, 2) ; "when numeric alphabetic suffix space")]
+    #[test_case("twone " => (2, 1) ; "when overlapping suffix space")]
+    #[test_case("12eaouaoeu" => (1, 2) ; "when numeric suffix")]
+    #[test_case("onetwoaeoue" => (1, 2) ; "when alphabetic suffix")]
+    #[test_case("one2aeoue" => (1, 2) ; "when alphabetic numeric suffix")]
+    #[test_case("1twoaeoue" => (1, 2) ; "when numeric alphabetic suffix")]
+    #[test_case("twoneaeoue" => (2, 1) ; "when overlapping suffix")]
+    #[test_case("1 2" => (1, 2) ; "when numeric spaced")]
+    #[test_case("one two" => (1, 2) ; "when alphabetic spaced")]
+    #[test_case("one 2" => (1, 2) ; "when alphabetic numeric spaced")]
+    #[test_case("1 two" => (1, 2) ; "when numeric alphabetic spaced")]
+    #[test_case("1aoeueoau2" => (1, 2) ; "when numeric with inbetween")]
+    #[test_case("oneaoeueoautwo" => (1, 2) ; "when alphabetic with inbetween")]
+    #[test_case("oneaoeueoau2" => (1, 2) ; "when alphabetic numeric with inbetween")]
+    #[test_case("1aoeueoautwo" => (1, 2) ; "when numeric alphabetic with inbetween")]
+    #[test_case(" 1 2 " => (1, 2) ; "when numeric fully spaced")]
+    #[test_case(" one two " => (1, 2) ; "when alphabetic fully spaced")]
+    #[test_case(" one 2 " => (1, 2) ; "when alphabetic numeric fully spaced")]
+    #[test_case(" 1 two " => (1, 2) ; "when numeric alphabetic fully spaced")]
+    fn multiple_digits(input: &str) -> (i64, i64) {
         let (rest, one) = super::parse_glob_then_digit(input).unwrap();
         let (_, two) = super::parse_glob_then_digit(rest).unwrap();
-        assert_eq!(first, one);
-        assert_eq!(second, two);
+        (one, two)
+    }
+
+    #[test_case("" ; "when empty")]
+    #[test_case("abc" ; "when letters")]
+    #[should_panic]
+    fn multiple_digits_panics(input: &str) {
+        let (rest, _) = super::parse_glob_then_digit(input).unwrap();
+        super::parse_glob_then_digit(rest).unwrap();
     }
 }
