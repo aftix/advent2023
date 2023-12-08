@@ -66,7 +66,6 @@ pub fn parse_line(input: &str) -> IResult<&str, i64> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use nom::character::is_alphabetic;
     use ntest::test_case;
 
@@ -85,8 +84,8 @@ mod test {
     #[should_panic]
     #[test_case("!@#$@#", 0)]
     #[should_panic]
-    fn test_parse_literal_digit(input: &str, output: i64) {
-        let (_, num) = parse_literal_digit(input).unwrap();
+    fn parse_literal_digit(input: &str, output: i64) {
+        let (_, num) = super::parse_literal_digit(input).unwrap();
         assert_eq!(output, num);
     }
 
@@ -105,8 +104,8 @@ mod test {
     #[should_panic]
     #[test_case("!@#$@#", 0)]
     #[should_panic]
-    fn test_parse_spelled_digit(input: &str, output: i64) {
-        let (rest, num) = parse_spelled_digit(input).unwrap();
+    fn parse_spelled_digit(input: &str, output: i64) {
+        let (rest, num) = super::parse_spelled_digit(input).unwrap();
         assert_eq!(input.chars().last(), rest.chars().next());
         assert_eq!(output, num);
     }
@@ -133,8 +132,8 @@ mod test {
     #[should_panic]
     #[test_case("!@#$@#", 0)]
     #[should_panic]
-    fn test_parse_digit(input: &str, output: i64) {
-        let (rest, num) = parse_digit(input).unwrap();
+    fn parse_digit(input: &str, output: i64) {
+        let (rest, num) = super::parse_digit(input).unwrap();
         if is_alphabetic(input.as_bytes()[0]) {
             assert_eq!(input.chars().last(), rest.chars().next());
         }
@@ -165,11 +164,61 @@ mod test {
     #[should_panic]
     #[test_case("!@#$@#", 0, false)]
     #[should_panic]
-    fn test_parse_glob_then_digit(input: &str, output: i64, spelled: bool) {
-        let (rest, num) = parse_glob_then_digit(input).unwrap();
+    fn parse_glob_then_digit(input: &str, output: i64, spelled: bool) {
+        let (rest, num) = super::parse_glob_then_digit(input).unwrap();
         if spelled {
             assert_eq!(input.chars().last(), rest.chars().next());
         }
         assert_eq!(output, num);
+    }
+
+    #[test_case("12", 1, 2)]
+    #[test_case("onetwo", 1, 2)]
+    #[test_case("one2", 1, 2)]
+    #[test_case("1two", 1, 2)]
+    #[test_case("twone", 2, 1)]
+    #[test_case(" 12", 1, 2)]
+    #[test_case(" onetwo", 1, 2)]
+    #[test_case(" one2", 1, 2)]
+    #[test_case(" 1two", 1, 2)]
+    #[test_case(" twone", 2, 1)]
+    #[test_case("aaeaou12", 1, 2)]
+    #[test_case("aaeaouonetwo", 1, 2)]
+    #[test_case("aaeaouone2", 1, 2)]
+    #[test_case("aaeaou1two", 1, 2)]
+    #[test_case("aaeaoutwone", 2, 1)]
+    #[test_case("12 ", 1, 2)]
+    #[test_case("onetwo ", 1, 2)]
+    #[test_case("one2 ", 1, 2)]
+    #[test_case("1two ", 1, 2)]
+    #[test_case("twone ", 2, 1)]
+    #[test_case("12eaouaoeu", 1, 2)]
+    #[test_case("onetwoaeoue", 1, 2)]
+    #[test_case("one2aeoue", 1, 2)]
+    #[test_case("1twoaeoue", 1, 2)]
+    #[test_case("twoneaeoue", 2, 1)]
+    #[test_case("1 2", 1, 2)]
+    #[test_case("one two", 1, 2)]
+    #[test_case("one 2", 1, 2)]
+    #[test_case("1 two", 1, 2)]
+    #[test_case("1aoeueoau2", 1, 2)]
+    #[test_case("oneaoeueoautwo", 1, 2)]
+    #[test_case("oneaoeueoau2", 1, 2)]
+    #[test_case("1aoeueoautwo", 1, 2)]
+    #[test_case(" 1 2 ", 1, 2)]
+    #[test_case(" one two ", 1, 2)]
+    #[test_case(" one 2 ", 1, 2)]
+    #[test_case(" 1 two ", 1, 2)]
+    #[test_case("", 0, 0)]
+    #[should_panic]
+    #[test_case("abc", 0, 0)]
+    #[should_panic]
+    #[test_case("one", 0, 0)]
+    #[should_panic]
+    fn multiple_digits(input: &str, first: i64, second: i64) {
+        let (rest, one) = super::parse_glob_then_digit(input).unwrap();
+        let (_, two) = super::parse_glob_then_digit(rest).unwrap();
+        assert_eq!(first, one);
+        assert_eq!(second, two);
     }
 }
