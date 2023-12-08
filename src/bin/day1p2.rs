@@ -1,4 +1,4 @@
-use advent2023::parser::parse_line;
+use advent2023::parser::day1::parse_line;
 use rayon::prelude::*;
 use std::io;
 

@@ -33,7 +33,7 @@ fn day1(r: &[&str]) -> i64 {
 }
 
 fn day1p2(r: &[&str]) -> i64 {
-    use advent2023::parser::parse_line;
+    use advent2023::parser::day1::parse_line;
     r.par_iter()
         .map(|line| parse_line(&line).ok().map(|(_, num)| num))
         .flatten()
