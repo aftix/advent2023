@@ -62,6 +62,24 @@ fn day1p2_benchmark(c: &mut Criterion) {
     });
 }
 
+fn get_power(game: advent2023::types::Game) -> i64 {
+    use advent2023::types::GameSet;
+    let maximums = game.sets.into_par_iter().reduce(
+        || GameSet {
+            red: 0,
+            green: 0,
+            blue: 0,
+        },
+        |mut acc, set| {
+            acc.red = acc.red.max(set.red);
+            acc.green = acc.green.max(set.green);
+            acc.blue = acc.blue.max(set.blue);
+            acc
+        },
+    );
+    maximums.red * maximums.green * maximums.blue
+}
+
 fn day2(r: &[&str]) -> i64 {
     use advent2023::parser::day2::parse_line;
     r.par_iter()
@@ -77,6 +95,15 @@ fn day2(r: &[&str]) -> i64 {
         .sum()
 }
 
+fn day2p2(r: &[&str]) -> i64 {
+    use advent2023::parser::day2::parse_line;
+    r.par_iter()
+        .map(|&line| parse_line(line).ok().map(|(_, game)| game))
+        .flatten()
+        .map(get_power)
+        .sum()
+}
+
 fn day2_benchmark(c: &mut Criterion) {
     c.bench_function("day 2", |b| {
         let input_file =
@@ -88,7 +115,24 @@ fn day2_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day1_benchmark, day1p2_benchmark, day2_benchmark);
+fn day2p2_benchmark(c: &mut Criterion) {
+    c.bench_function("day2 p2", |b| {
+        let input_file =
+            File::open("bench_inputs/day2.dat").expect("Could not find file bench_inputs/day2.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| day2p2(black_box(&str_lines)))
+    });
+}
+
+criterion_group!(
+    benches,
+    day1_benchmark,
+    day1p2_benchmark,
+    day2_benchmark,
+    day2p2_benchmark
+);
 
 criterion_main! {
     benches
