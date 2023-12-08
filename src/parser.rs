@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{char, one_of},
+    character::complete::{char, digit1, one_of},
     combinator::peek,
     error::{Error, ErrorKind},
     sequence::terminated,
@@ -48,6 +48,15 @@ pub fn parse_literal_digit(input: &str) -> IResult<&str, i64> {
     }
 }
 
+pub fn parse_int(input: &str) -> IResult<&str, i64> {
+    let (rest, num) = digit1(input)?;
+
+    match num.parse() {
+        Ok(num) => Ok((rest, num)),
+        Err(_) => Err(nErr::Error(Error::new(rest, ErrorKind::Digit))),
+    }
+}
+
 pub fn parse_digit(input: &str) -> IResult<&str, i64> {
     alt((parse_spelled_digit, parse_literal_digit))(input)
 }
@@ -75,6 +84,29 @@ mod test {
     fn parse_literal_digit(input: &str, output: i64) {
         let (_, num) = super::parse_literal_digit(input).unwrap();
         assert_eq!(output, num);
+    }
+
+    #[test_case("1", 1, "")]
+    #[test_case("2", 2, "")]
+    #[test_case("3", 3, "")]
+    #[test_case("4", 4, "")]
+    #[test_case("5", 5, "")]
+    #[test_case("6", 6, "")]
+    #[test_case("7", 7, "")]
+    #[test_case("8", 8, "")]
+    #[test_case("9", 9, "")]
+    #[test_case("9a", 9, "a")]
+    #[test_case("134", 134, "")]
+    #[test_case("", 0, "")]
+    #[should_panic]
+    #[test_case("one", 0, "")]
+    #[should_panic]
+    #[test_case("!@#$@#", 0, "")]
+    #[should_panic]
+    fn parse_int(input: &str, output: i64, remains: &str) {
+        let (rest, num) = super::parse_int(input).unwrap();
+        assert_eq!(output, num);
+        assert_eq!(remains, rest);
     }
 
     #[test_case("one", 1)]
