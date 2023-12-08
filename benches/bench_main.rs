@@ -32,8 +32,16 @@ fn day1(r: &[&str]) -> i64 {
         .sum()
 }
 
+fn day1p2(r: &[&str]) -> i64 {
+    use advent2023::parser::parse_line;
+    r.par_iter()
+        .map(|line| parse_line(&line).ok().map(|(_, num)| num))
+        .flatten()
+        .sum()
+}
+
 fn day1_benchmark(c: &mut Criterion) {
-    c.bench_function("day1 100", |b| {
+    c.bench_function("day1", |b| {
         let input_file =
             File::open("bench_inputs/day1.dat").expect("Could not find file bench_inputs/day1.dat");
         let buf_read = BufReader::new(input_file);
@@ -43,7 +51,18 @@ fn day1_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day1_benchmark);
+fn day1p2_benchmark(c: &mut Criterion) {
+    c.bench_function("day1p2", |b| {
+        let input_file =
+            File::open("bench_inputs/day1.dat").expect("Could not find file bench_inputs/day1.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| day1p2(black_box(&str_lines)))
+    });
+}
+
+criterion_group!(benches, day1_benchmark, day1p2_benchmark);
 
 criterion_main! {
     benches
