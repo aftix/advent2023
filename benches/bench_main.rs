@@ -62,7 +62,33 @@ fn day1p2_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, day1_benchmark, day1p2_benchmark);
+fn day2(r: &[&str]) -> i64 {
+    use advent2023::parser::day2::parse_line;
+    r.par_iter()
+        .map(|&line| parse_line(line).ok().map(|(_, game)| game))
+        .flatten()
+        .filter(|game| {
+            game.sets
+                .par_iter()
+                .find_any(|set| set.red > 12 || set.green > 13 || set.blue > 14)
+                .is_none()
+        })
+        .map(|game| game.id)
+        .sum()
+}
+
+fn day2_benchmark(c: &mut Criterion) {
+    c.bench_function("day 2", |b| {
+        let input_file =
+            File::open("bench_inputs/day2.dat").expect("Could not find file bench_inputs/day2.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| day2(black_box(&str_lines)))
+    });
+}
+
+criterion_group!(benches, day1_benchmark, day1p2_benchmark, day2_benchmark);
 
 criterion_main! {
     benches
