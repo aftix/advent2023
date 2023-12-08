@@ -51,7 +51,6 @@ pub fn parse_digit(input: &str) -> IResult<&str, i64> {
 }
 
 pub fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
-    println!("Parsing glob and digit from {input}");
     let (rest, (_, digit)) = many_till(take(1usize), parse_digit)(input)?;
     Ok((rest, digit))
 }
@@ -59,7 +58,6 @@ pub fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
 pub fn parse_line(input: &str) -> IResult<&str, i64> {
     let (_, first_digit) = parse_glob_then_digit(input)?;
     let (_, second_digit) = many1(parse_glob_then_digit)(input)?;
-    println!("{} {:?}", input, second_digit);
     let second_digit = second_digit.last().unwrap();
     Ok(("", first_digit * 10 + second_digit))
 }
