@@ -41,7 +41,7 @@ fn day1p2(r: &[&str]) -> i64 {
 }
 
 fn day1_benchmark(c: &mut Criterion) {
-    c.bench_function("day1", |b| {
+    c.bench_function("day 1", |b| {
         let input_file =
             File::open("bench_inputs/day1.dat").expect("Could not find file bench_inputs/day1.dat");
         let buf_read = BufReader::new(input_file);
@@ -52,7 +52,7 @@ fn day1_benchmark(c: &mut Criterion) {
 }
 
 fn day1p2_benchmark(c: &mut Criterion) {
-    c.bench_function("day1p2", |b| {
+    c.bench_function("day 1 p2", |b| {
         let input_file =
             File::open("bench_inputs/day1.dat").expect("Could not find file bench_inputs/day1.dat");
         let buf_read = BufReader::new(input_file);
@@ -116,7 +116,7 @@ fn day2_benchmark(c: &mut Criterion) {
 }
 
 fn day2p2_benchmark(c: &mut Criterion) {
-    c.bench_function("day2 p2", |b| {
+    c.bench_function("day 2 p2", |b| {
         let input_file =
             File::open("bench_inputs/day2.dat").expect("Could not find file bench_inputs/day2.dat");
         let buf_read = BufReader::new(input_file);
@@ -126,12 +126,82 @@ fn day2p2_benchmark(c: &mut Criterion) {
     });
 }
 
+fn day3(r: &[&str]) -> i64 {
+    use advent2023::types::Schematic;
+    use std::collections::{HashMap, HashSet};
+
+    let (_, ((width, _), items)) =
+        advent2023::parser::day3::parse_input(r).expect("Failed to parse input");
+
+    let linear_to_rect = |idx: usize| (idx % width, idx / width);
+
+    let mut coordinate_map: HashMap<(usize, usize), &Schematic> = HashMap::new();
+    items.iter().for_each(|schem| {
+        let span = schem.span();
+        for idx in span.0..span.1 {
+            coordinate_map.insert(linear_to_rect(idx), schem);
+        }
+    });
+
+    let mut already_added = HashSet::new();
+    let mut get_adjacent_numbers = |idx: usize| {
+        let (x, y) = linear_to_rect(idx);
+        [
+            (x + 1, y),
+            (x - 1, y),
+            (x, y + 1),
+            (x, y - 1),
+            (x + 1, y + 1),
+            (x + 1, y - 1),
+            (x - 1, y + 1),
+            (x - 1, y - 1),
+        ]
+        .iter()
+        .map(|coords| {
+            if let Some(&schem) = coordinate_map.get(coords) {
+                match schem {
+                    Schematic::Number(num, _) => {
+                        let num = *num;
+                        if already_added.insert(*schem) {
+                            num
+                        } else {
+                            0
+                        }
+                    }
+                    _ => 0,
+                }
+            } else {
+                0
+            }
+        })
+        .sum::<i64>()
+    };
+
+    items
+        .iter()
+        .filter(|schem| schem.is_symbol())
+        .map(|symb| get_adjacent_numbers(symb.span().0))
+        .sum()
+}
+
+fn day3_benchmark(c: &mut Criterion) {
+    c.bench_function("day 3", |b| {
+        let input_file =
+            File::open("bench_inputs/day3.dat").expect("Could not find file bench_inputs/day3.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| day3(black_box(&str_lines)))
+    });
+}
+
 criterion_group!(
     benches,
     day1_benchmark,
     day1p2_benchmark,
     day2_benchmark,
-    day2p2_benchmark
+    day2p2_benchmark,
+    day3_benchmark,
 );
 
 criterion_main! {
