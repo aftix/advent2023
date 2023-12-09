@@ -7,7 +7,7 @@ const NUM_GREEN: i64 = 13;
 const NUM_BLUE: i64 = 14;
 
 pub fn main() {
-    let lines: Vec<String> = io::stdin().lines().flatten().collect();
+    let lines: Vec<String> = io::stdin().lines().map_while(Result::ok).collect();
     let sum: i64 = lines
         .into_par_iter()
         .map(|line| parse_line(&line).ok().map(|(_, game)| game))

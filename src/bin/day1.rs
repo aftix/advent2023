@@ -20,7 +20,7 @@ fn parse_line(input: &str) -> IResult<&str, i64> {
 }
 
 pub fn main() {
-    let lines: Vec<String> = io::stdin().lines().flatten().collect();
+    let lines: Vec<String> = io::stdin().lines().map_while(Result::ok).collect();
     let sum: i64 = lines
         .par_iter()
         .map(|line| parse_line(line).ok().map(|(_, num)| num))

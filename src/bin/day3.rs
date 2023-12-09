@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 
 pub fn main() {
-    let lines: Vec<String> = io::stdin().lines().flatten().collect();
+    let lines: Vec<String> = io::stdin().lines().map_while(Result::ok).collect();
     let lines: Vec<_> = lines.iter().map(String::as_str).collect();
 
     let (_, ((width, _), items)) = parse_input(&lines).expect("Failed to parse input");

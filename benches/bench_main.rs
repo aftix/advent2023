@@ -27,7 +27,7 @@ mod day1 {
 
 fn day1(r: &[&str]) -> i64 {
     r.par_iter()
-        .map(|line| day1::parse_line(&line).ok().map(|(_, num)| num))
+        .map(|line| day1::parse_line(line).ok().map(|(_, num)| num))
         .flatten()
         .sum()
 }
@@ -35,7 +35,7 @@ fn day1(r: &[&str]) -> i64 {
 fn day1p2(r: &[&str]) -> i64 {
     use advent2023::parser::day1::parse_line;
     r.par_iter()
-        .map(|line| parse_line(&line).ok().map(|(_, num)| num))
+        .map(|line| parse_line(line).ok().map(|(_, num)| num))
         .flatten()
         .sum()
 }
