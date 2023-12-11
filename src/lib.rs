@@ -1,6 +1,7 @@
 #![feature(iterator_try_collect)]
 // Advent of Code 2023 utility lib
 
+use parser::day4;
 use rayon::prelude::*;
 
 pub mod parser;
@@ -216,13 +217,29 @@ pub fn day3p2(input: &[&str]) -> i64 {
         .sum()
 }
 
+pub fn day4(input: &[&str]) -> i64 {
+    input
+        .par_iter()
+        .map(|&line| day4::parse_line(line).map(|(_, tuple)| tuple))
+        .flatten()
+        .map(|(_, winners, cards)| cards.iter().filter(|num| winners.contains(num)).count())
+        .map(|num_winners| {
+            if num_winners == 0 {
+                0
+            } else {
+                1 << (num_winners - 1)
+            }
+        })
+        .sum()
+}
+
 #[cfg(test)]
 mod test {
     use maketest::make_tests;
 
     make_tests! {
         INPUT_PATH: "../inputs";
-        DAYS: [1, 1p2, 2, 2p2, 3, 3p2];
+        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4];
         INPUT_OVERRIDES: {
             1p2 => "day1p2";
         };
@@ -233,6 +250,7 @@ mod test {
             2p2 => 2286;
             3 => 4361;
             3p2 => 467835;
+            4 => 13;
         };
     }
 }
