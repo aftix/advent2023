@@ -1,4 +1,4 @@
-workspace = { members = ["maketest"] }
+workspace = { members = [ "makebench","maketest"] }
 
 [package]
 name = "advent2023"
@@ -15,6 +15,7 @@ rayon = "1.8.0"
 criterion = {version="0.4", features=["html_reports"]}
 test-case = "3.3"
 maketest = {path="./maketest"}
+makebench = {path="./makebench"}
 
 [lib]
 bench = false
