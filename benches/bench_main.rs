@@ -2,43 +2,6 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rayon::prelude::*;
-
-mod day1 {
-    use advent2023::parser::parse_literal_digit;
-    use nom::{
-        character::complete::alpha0,
-        multi::{many1, many_till},
-        IResult,
-    };
-
-    pub(super) fn parse_line(input: &str) -> IResult<&str, i64> {
-        let (_, first_digit) = parse_glob_then_digit(input)?;
-        let (_, second_digit) = many1(parse_glob_then_digit)(input)?;
-        let second_digit = second_digit.last().unwrap();
-        Ok(("", first_digit * 10 + second_digit))
-    }
-
-    fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
-        let (rest, (_, digit)) = many_till(alpha0, parse_literal_digit)(input)?;
-        Ok((rest, digit))
-    }
-}
-
-fn day1(r: &[&str]) -> i64 {
-    r.par_iter()
-        .map(|line| day1::parse_line(line).ok().map(|(_, num)| num))
-        .flatten()
-        .sum()
-}
-
-fn day1p2(r: &[&str]) -> i64 {
-    use advent2023::parser::day1::parse_line;
-    r.par_iter()
-        .map(|line| parse_line(line).ok().map(|(_, num)| num))
-        .flatten()
-        .sum()
-}
 
 fn day1_benchmark(c: &mut Criterion) {
     c.bench_function("day 1", |b| {
@@ -47,7 +10,7 @@ fn day1_benchmark(c: &mut Criterion) {
         let buf_read = BufReader::new(input_file);
         let lines: Vec<String> = buf_read.lines().flatten().collect();
         let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        b.iter(|| day1(black_box(&str_lines)))
+        b.iter(|| advent2023::day1(black_box(&str_lines)))
     });
 }
 
@@ -58,50 +21,8 @@ fn day1p2_benchmark(c: &mut Criterion) {
         let buf_read = BufReader::new(input_file);
         let lines: Vec<String> = buf_read.lines().flatten().collect();
         let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        b.iter(|| day1p2(black_box(&str_lines)))
+        b.iter(|| advent2023::day1p2(black_box(&str_lines)))
     });
-}
-
-fn get_power(game: advent2023::types::Game) -> i64 {
-    use advent2023::types::GameSet;
-    let maximums = game.sets.into_par_iter().reduce(
-        || GameSet {
-            red: 0,
-            green: 0,
-            blue: 0,
-        },
-        |mut acc, set| {
-            acc.red = acc.red.max(set.red);
-            acc.green = acc.green.max(set.green);
-            acc.blue = acc.blue.max(set.blue);
-            acc
-        },
-    );
-    maximums.red * maximums.green * maximums.blue
-}
-
-fn day2(r: &[&str]) -> i64 {
-    use advent2023::parser::day2::parse_line;
-    r.par_iter()
-        .map(|&line| parse_line(line).ok().map(|(_, game)| game))
-        .flatten()
-        .filter(|game| {
-            game.sets
-                .par_iter()
-                .find_any(|set| set.red > 12 || set.green > 13 || set.blue > 14)
-                .is_none()
-        })
-        .map(|game| game.id)
-        .sum()
-}
-
-fn day2p2(r: &[&str]) -> i64 {
-    use advent2023::parser::day2::parse_line;
-    r.par_iter()
-        .map(|&line| parse_line(line).ok().map(|(_, game)| game))
-        .flatten()
-        .map(get_power)
-        .sum()
 }
 
 fn day2_benchmark(c: &mut Criterion) {
@@ -111,7 +32,7 @@ fn day2_benchmark(c: &mut Criterion) {
         let buf_read = BufReader::new(input_file);
         let lines: Vec<String> = buf_read.lines().flatten().collect();
         let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        b.iter(|| day2(black_box(&str_lines)))
+        b.iter(|| advent2023::day2(black_box(&str_lines)))
     });
 }
 
@@ -122,66 +43,8 @@ fn day2p2_benchmark(c: &mut Criterion) {
         let buf_read = BufReader::new(input_file);
         let lines: Vec<String> = buf_read.lines().flatten().collect();
         let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        b.iter(|| day2p2(black_box(&str_lines)))
+        b.iter(|| advent2023::day2p2(black_box(&str_lines)))
     });
-}
-
-fn day3(r: &[&str]) -> i64 {
-    use advent2023::types::Schematic;
-    use std::collections::{HashMap, HashSet};
-
-    let (_, ((width, _), items)) =
-        advent2023::parser::day3::parse_input(r).expect("Failed to parse input");
-
-    let linear_to_rect = |idx: usize| (idx % width, idx / width);
-
-    let mut coordinate_map: HashMap<(usize, usize), &Schematic> = HashMap::new();
-    items.iter().for_each(|schem| {
-        let span = schem.span();
-        for idx in span.0..span.1 {
-            coordinate_map.insert(linear_to_rect(idx), schem);
-        }
-    });
-
-    let mut already_added = HashSet::new();
-    let mut get_adjacent_numbers = |idx: usize| {
-        let (x, y) = linear_to_rect(idx);
-        [
-            (x + 1, y),
-            (x - 1, y),
-            (x, y + 1),
-            (x, y - 1),
-            (x + 1, y + 1),
-            (x + 1, y - 1),
-            (x - 1, y + 1),
-            (x - 1, y - 1),
-        ]
-        .iter()
-        .map(|coords| {
-            if let Some(&schem) = coordinate_map.get(coords) {
-                match schem {
-                    Schematic::Number(num, _) => {
-                        let num = *num;
-                        if already_added.insert(*schem) {
-                            num
-                        } else {
-                            0
-                        }
-                    }
-                    _ => 0,
-                }
-            } else {
-                0
-            }
-        })
-        .sum::<i64>()
-    };
-
-    items
-        .iter()
-        .filter(|schem| schem.is_symbol())
-        .map(|symb| get_adjacent_numbers(symb.span().0))
-        .sum()
 }
 
 fn day3_benchmark(c: &mut Criterion) {
@@ -191,7 +54,29 @@ fn day3_benchmark(c: &mut Criterion) {
         let buf_read = BufReader::new(input_file);
         let lines: Vec<String> = buf_read.lines().flatten().collect();
         let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
-        b.iter(|| day3(black_box(&str_lines)))
+        b.iter(|| advent2023::day3(black_box(&str_lines)))
+    });
+}
+
+fn day3p2_benchmark(c: &mut Criterion) {
+    c.bench_function("day 3 p2", |b| {
+        let input_file =
+            File::open("bench_inputs/day3.dat").expect("Could not find file bench_inputs/day3.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| advent2023::day3p2(black_box(&str_lines)))
+    });
+}
+
+fn day4_benchmark(c: &mut Criterion) {
+    c.bench_function("day 4", |b| {
+        let input_file =
+            File::open("bench_inputs/day3.dat").expect("Could not find file bench_inputs/day3.dat");
+        let buf_read = BufReader::new(input_file);
+        let lines: Vec<String> = buf_read.lines().flatten().collect();
+        let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
+        b.iter(|| advent2023::day4(black_box(&str_lines)))
     });
 }
 
@@ -202,6 +87,8 @@ criterion_group!(
     day2_benchmark,
     day2p2_benchmark,
     day3_benchmark,
+    day3p2_benchmark,
+    day4_benchmark,
 );
 
 criterion_main! {
