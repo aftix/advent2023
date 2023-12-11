@@ -217,12 +217,16 @@ pub fn day3p2(input: &[&str]) -> i64 {
         .sum()
 }
 
+fn get_winners((_id, winners, cards): &(u32, Vec<i64>, Vec<i64>)) -> usize {
+    cards.iter().filter(|num| winners.contains(num)).count()
+}
+
 pub fn day4(input: &[&str]) -> i64 {
     input
         .par_iter()
         .map(|&line| day4::parse_line(line).map(|(_, tuple)| tuple))
         .flatten()
-        .map(|(_, winners, cards)| cards.iter().filter(|num| winners.contains(num)).count())
+        .map(|x| get_winners(&x))
         .map(|num_winners| {
             if num_winners == 0 {
                 0
@@ -231,6 +235,18 @@ pub fn day4(input: &[&str]) -> i64 {
             }
         })
         .sum()
+}
+
+mod day4p2;
+
+pub fn day4p2(input: &[&str]) -> i64 {
+    let cards: Vec<_> = input
+        .par_iter()
+        .map(|&line| day4::parse_line(line).map(|(_, tuple)| tuple))
+        .flatten()
+        .collect();
+
+    day4p2::Day4p2::new(&cards).map(|(num, _)| num as i64).sum()
 }
 
 #[cfg(test)]
@@ -251,6 +267,7 @@ mod test {
             3 => 4361;
             3p2 => 467835;
             4 => 13;
+            4p2 => 30;
         };
     }
 }
