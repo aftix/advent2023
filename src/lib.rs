@@ -343,13 +343,13 @@ pub fn day5p2(input: &[&str]) -> i64 {
                     }
                 })
                 .collect();
-            seeds.extend(to_add.into_iter());
+            seeds.extend(to_add);
         } else {
             already_mapped.clear();
             let range_cmp = |left: &Range<i64>, right: &Range<i64>| match left.start.cmp(&right.end)
             {
                 std::cmp::Ordering::Equal => left.end.cmp(&right.end),
-                ord @ _ => ord,
+                ord => ord,
             };
             seeds.sort_by(range_cmp);
             seeds.dedup_by(|check, acc| {
