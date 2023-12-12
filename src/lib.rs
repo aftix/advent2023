@@ -1,8 +1,12 @@
 #![feature(iterator_try_collect)]
+#![feature(iter_array_chunks)]
 // Advent of Code 2023 utility lib
 
 use parser::day4;
 use rayon::prelude::*;
+use std::{collections::HashSet, ops::Range};
+
+use crate::types::Day5;
 
 pub mod parser;
 pub mod types;
@@ -249,13 +253,126 @@ pub fn day4p2(input: &[&str]) -> i64 {
     day4p2::Day4p2::new(&cards).map(|(num, _)| num as i64).sum()
 }
 
+pub fn day5(input: &[&str]) -> i64 {
+    let mut lines: Vec<_> = input
+        .par_iter()
+        .enumerate()
+        .map(|(idx, &line)| (idx, parser::day5::parse_line(line).map(|(_, day)| day)))
+        .filter_map(|(idx, res)| {
+            if let Ok(day) = res {
+                Some((idx, day))
+            } else {
+                None
+            }
+        })
+        .collect();
+    lines.sort_by_key(|(idx, _)| *idx);
+    let mut lines: Vec<_> = lines.into_iter().map(|(_, day)| day).collect();
+
+    let mut seeds = lines.remove(0).seeds();
+    let mut already_mapped = vec![];
+    lines.into_iter().for_each(|day| {
+        if let Day5::Maps(src, dest) = day {
+            seeds.iter_mut().for_each(|seed| {
+                if src.contains(seed) && !already_mapped.contains(seed) {
+                    *seed += dest - src.start;
+                    already_mapped.push(*seed);
+                }
+            });
+        } else {
+            already_mapped.clear();
+        }
+    });
+
+    seeds.into_iter().min().unwrap()
+}
+
+pub fn day5p2(input: &[&str]) -> i64 {
+    let mut lines: Vec<_> = input
+        .par_iter()
+        .enumerate()
+        .map(|(idx, &line)| (idx, parser::day5::parse_line(line).map(|(_, day)| day)))
+        .filter_map(|(idx, res)| {
+            if let Ok(day) = res {
+                Some((idx, day))
+            } else {
+                None
+            }
+        })
+        .collect();
+    lines.sort_by_key(|(idx, _)| *idx);
+    let mut lines: Vec<_> = lines.into_iter().map(|(_, day)| day).collect();
+
+    let seeds = lines.remove(0).seeds();
+    let mut seeds: Vec<_> = seeds
+        .into_iter()
+        .array_chunks::<2usize>()
+        .map(|array| (array[0]..array[0] + array[1]))
+        .collect();
+
+    let mut already_mapped: HashSet<Range<i64>> = HashSet::new();
+    lines.into_iter().for_each(|day| {
+        if let Day5::Maps(src, dest) = day {
+            let to_add: Vec<_> = seeds
+                .iter_mut()
+                .filter_map(|seed| {
+                    if already_mapped.contains(seed) {
+                        return None;
+                    }
+
+                    match (src.contains(&seed.start), src.contains(&(seed.end - 1))) {
+                        (true, true) => {
+                            *seed = (dest + seed.start - src.start)..(dest + seed.end - src.start);
+                            already_mapped.insert(seed.clone());
+                            None
+                        }
+                        (true, false) => {
+                            let new_range = src.end..seed.end;
+                            *seed =
+                                (dest + seed.start - src.start)..(dest + src.end - src.start - 1);
+                            already_mapped.insert(seed.clone());
+                            Some(new_range)
+                        }
+                        (false, true) => {
+                            let new_range = dest..(dest + seed.end - src.start);
+                            *seed = seed.start..src.start;
+                            already_mapped.insert(new_range.clone());
+                            Some(new_range)
+                        }
+                        (false, false) => None,
+                    }
+                })
+                .collect();
+            seeds.extend(to_add.into_iter());
+        } else {
+            already_mapped.clear();
+            let range_cmp = |left: &Range<i64>, right: &Range<i64>| match left.start.cmp(&right.end)
+            {
+                std::cmp::Ordering::Equal => left.end.cmp(&right.end),
+                ord @ _ => ord,
+            };
+            seeds.sort_by(range_cmp);
+            seeds.dedup_by(|check, acc| {
+                if check.end < acc.start || check.start > acc.end {
+                    false
+                } else {
+                    *acc = check.start.min(acc.start)..check.end.max(acc.end);
+                    true
+                }
+            });
+        }
+    });
+
+    seeds.into_iter().map(|r| r.start).min().unwrap()
+}
+
 #[cfg(test)]
 mod test {
     use maketest::make_tests;
 
     make_tests! {
         INPUT_PATH: "../inputs";
-        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4];
+        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2];
         INPUT_OVERRIDES: {
             1p2 => "day1p2";
         };
@@ -268,6 +385,8 @@ mod test {
             3p2 => 467835;
             4 => 13;
             4p2 => 30;
+            5 => 35;
+            5p2 => 46;
         };
     }
 }
