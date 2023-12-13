@@ -31,9 +31,6 @@ jobs:
         with:
           key: ${{ matrix.profile }}
 
-      - name: Generate binaries
-        run: ./generate_bins.sh
-      
       - name: Build
         uses: clechasseur/rs-cargo@v1
         with:
@@ -61,9 +58,6 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
 
-      - name: Generate binaries
-        run: ./generate_bins.sh
-      
       - name: Run Clippy
         uses: auguwu/clippy-action@1.2.2
         with:
@@ -84,9 +78,6 @@ jobs:
         with:
           crate: cargo-nextest
 
-      - name: Generate binaries
-        run: ./generate_bins.sh
-      
       - name: Run tests
         uses: clechasseur/rs-cargo@v1
         with:
@@ -108,11 +99,14 @@ jobs:
       
       - name: Get benchmark inputs
         run: >
-          perl -n -e'/name = "day([0-9]+)(?!p)/ && print $1,"\n"' < Cargo.toml |
+          tr -d '\n' < benches/bench_main.rs |
+          perl -ne"/$REGEX/ && print "'$1' | 
+          tr ',' '\n' |
           xargs -I% curl -X GET -H "Cookie: session=$SESSION" "$SITE/%/input" -o "bench_inputs/day%.dat"
         env:
           SITE: "https://adventofcode.com/2023/day"
           SESSION: ${{ secrets.SITE_SESSION_TOKEN }}
+          REGEX: (?<=\[)((\s*([12][0-9]|[1-9])(p2)?\s*,)*(\s*([12][0-9]|[1-9])(p2)?\s*))(?=])
 
       - name: Figure out checkout commit for baseline benchmarks
         id: baseline

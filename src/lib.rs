@@ -387,12 +387,7 @@ pub fn day6(input: &[&str]) -> i64 {
 
     times
         .zip(distances)
-        .map(|(time, dist)| {
-            (1..time)
-                .into_iter()
-                .filter(|t| (time - t) * t > dist)
-                .count() as i64
-        })
+        .map(|(time, dist)| (1..time).filter(|t| (time - t) * t > dist).count() as i64)
         .product()
 }
 
