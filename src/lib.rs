@@ -6,10 +6,10 @@ use parser::day4;
 use rayon::prelude::*;
 use std::{collections::HashSet, ops::Range};
 
-use crate::types::Day5;
-
 pub mod parser;
 pub mod types;
+
+use types::{Day5, RaceLabel};
 
 // Solutions
 
@@ -366,13 +366,43 @@ pub fn day5p2(input: &[&str]) -> i64 {
     seeds.into_iter().map(|r| r.start).min().unwrap()
 }
 
+pub fn day6(input: &[&str]) -> i64 {
+    let mut input: Vec<_> = input
+        .par_iter()
+        .map(|&line| parser::day6::parse_line(line).map(|(_, t)| t))
+        .flatten()
+        .collect();
+
+    let (times, distances) = if matches!(input[0].0, RaceLabel::Time) {
+        (
+            input.remove(0).1.into_par_iter(),
+            input.remove(0).1.into_par_iter(),
+        )
+    } else {
+        (
+            input.remove(1).1.into_par_iter(),
+            input.remove(0).1.into_par_iter(),
+        )
+    };
+
+    times
+        .zip(distances)
+        .map(|(time, dist)| {
+            (1..time)
+                .into_iter()
+                .filter(|t| (time - t) * t > dist)
+                .count() as i64
+        })
+        .product()
+}
+
 #[cfg(test)]
 mod test {
     use maketest::make_tests;
 
     make_tests! {
         INPUT_PATH: "../inputs";
-        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2];
+        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2, 6];
         INPUT_OVERRIDES: {
             1p2 => "day1p2";
         };
@@ -387,6 +417,7 @@ mod test {
             4p2 => 30;
             5 => 35;
             5p2 => 46;
+            6 => 288;
         };
     }
 }

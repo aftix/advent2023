@@ -13,6 +13,7 @@ pub mod day2;
 pub mod day3;
 pub mod day4;
 pub mod day5;
+pub mod day6;
 
 pub fn parse_spelled_digit(input: &str) -> IResult<&str, i64> {
     let (rest, num) = alt((
