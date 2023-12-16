@@ -80,10 +80,3 @@ impl Day5 {
         matches!(self, Self::Maps(_, _))
     }
 }
-
-#[derive(Default, Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub enum RaceLabel {
-    #[default]
-    Time,
-    Distance,
-}

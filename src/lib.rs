@@ -10,7 +10,7 @@ use std::{collections::HashSet, ops::Range};
 pub mod parser;
 pub mod types;
 
-use types::{Day5, RaceLabel};
+use types::Day5;
 
 // Solutions
 
@@ -370,8 +370,7 @@ pub fn day5p2(input: &[&str]) -> i64 {
 mod day6;
 
 pub fn day6(input: &[&str]) -> i64 {
-    let times = parser::day6::parse_line(input[0]).unwrap().1 .1;
-    let records = parser::day6::parse_line(input[1]).unwrap().1 .1;
+    let (times, records) = parser::day6::parse_line(input);
 
     times
         .into_iter()
@@ -381,8 +380,7 @@ pub fn day6(input: &[&str]) -> i64 {
 }
 
 pub fn day6p2(input: &[&str]) -> i64 {
-    let times = parser::day6::parse_line(input[0]).unwrap().1 .1;
-    let records = parser::day6::parse_line(input[1]).unwrap().1 .1;
+    let (times, records) = parser::day6::parse_line(input);
     let fold_fn = |acc: i64, x: i64| {
         if acc == 0 {
             x
