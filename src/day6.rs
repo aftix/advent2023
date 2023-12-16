@@ -12,26 +12,33 @@ pub(crate) fn ways_to_win(time: i64, record: i64) -> i64 {
     // x2 = (time + sqrt(time^2 - 4* record))/2
     // Then we win for x in [ceil(x1), floor(x2)]
 
-    let time_f = time as f64;
-    let record_f = record as f64;
-    let det: f64 = time_f.powi(2) - 4.0 * record_f;
-    let root = det.sqrt();
+    // for proofs, x real, m, n are integers
 
-    if !root.is_nan() {
-        let lower = (time_f - root) * 0.5;
-        let upper = (time_f + root) * 0.5;
+    // floor((time + root) / 2)
+    // => floor((time + floor(root)) / 2) { floor((x + m)/n) = floor((floor(x) + m)/n if n is positive}
 
-        // Check the boundaries (if det is a perfect square, then lower or upper could be as well)
-        if (root as i64).pow(2) == det as i64 {
-            // lower and upper are integers iff time +/- root is even
-            // So lower and upper are both integers or neither are
-            if (time + root as i64) % 2 == 0 {
-                upper.floor() as i64 - lower.ceil() as i64 - 1
-            } else {
-                upper.floor() as i64 - lower.ceil() as i64 + 1
-            }
+    // ceil((time - root) / 2)
+    // => ceil((time + ceil(-root))/2) { ceil((x+m)/n) = ceil((ceil(x)+m)/n) }
+    // => ceil((time - floor(root))/2) { ceil(-x) = -floor(x) }
+    // => (time - floor(root)) - floor((time - floor(root))/2) { n = floor(n/2) + ceil(n/2) }
+
+    let determinate = time.pow(2) - 4 * record;
+    if let Some(root) = determinate.checked_isqrt() {
+        // Since isqrt rounds down, root is floor(root) (root is positive)
+        // integer division by 2 is floor for positive numerator (rounds down)
+        let lower = time - root - (time - root) / 2;
+        let upper = (time + root) / 2;
+
+        let range = upper - lower + 1;
+
+        // If the quadratic roots are integers, we don't include the endpoints
+        // That occurs when 1) determinate is a perfect square
+        // and 2) time +/- root is even (due to 2 in denominator)
+        // (time + root and time - root have the same parity)
+        if root.pow(2) == determinate && (time + root) % 2 == 0 {
+            range - 2
         } else {
-            upper.floor() as i64 - lower.ceil() as i64 + 1
+            range
         }
     } else {
         0
