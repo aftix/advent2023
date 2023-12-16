@@ -1,5 +1,6 @@
 #![feature(iterator_try_collect)]
 #![feature(iter_array_chunks)]
+#![feature(isqrt)]
 // Advent of Code 2023 utility lib
 
 use parser::day4;
@@ -366,6 +367,8 @@ pub fn day5p2(input: &[&str]) -> i64 {
     seeds.into_iter().map(|r| r.start).min().unwrap()
 }
 
+mod day6;
+
 pub fn day6(input: &[&str]) -> i64 {
     let mut input: Vec<_> = input
         .par_iter()
@@ -373,7 +376,7 @@ pub fn day6(input: &[&str]) -> i64 {
         .flatten()
         .collect();
 
-    let (times, distances) = if matches!(input[0].0, RaceLabel::Time) {
+    let (times, records) = if matches!(input[0].0, RaceLabel::Time) {
         (
             input.remove(0).1.into_par_iter(),
             input.remove(0).1.into_par_iter(),
@@ -385,10 +388,36 @@ pub fn day6(input: &[&str]) -> i64 {
         )
     };
 
-    times
-        .zip(distances)
-        .map(|(time, dist)| (1..time).filter(|t| (time - t) * t > dist).count() as i64)
-        .product()
+    let vec: Vec<_> = times
+        .zip(records)
+        .map(|(time, record)| day6::ways_to_win(time, record))
+        .collect();
+    vec.into_iter().product()
+}
+
+pub fn day6p2(input: &[&str]) -> i64 {
+    let mut input: Vec<_> = input
+        .par_iter()
+        .map(|&line| parser::day6::parse_line(line).map(|(_, t)| t))
+        .flatten()
+        .collect();
+
+    let (times, records) = if matches!(input[0].0, RaceLabel::Time) {
+        (input.remove(0).1, input.remove(0).1)
+    } else {
+        (input.remove(1).1, input.remove(0).1)
+    };
+
+    let fold_fn = |acc: i64, x: i64| {
+        if acc == 0 {
+            x
+        } else {
+            acc * i64::pow(10, x.ilog10() + 1) + x
+        }
+    };
+    let time = times.into_iter().fold(0, fold_fn);
+    let records = records.into_iter().fold(0, fold_fn);
+    day6::ways_to_win(time, records)
 }
 
 #[cfg(test)]
@@ -397,7 +426,7 @@ mod test {
 
     make_tests! {
         INPUT_PATH: "../inputs";
-        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2, 6];
+        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2, 6, 6p2];
         INPUT_OVERRIDES: {
             1p2 => "day1p2";
         };
@@ -413,6 +442,7 @@ mod test {
             5 => 35;
             5p2 => 46;
             6 => 288;
+            6p2 => 71503;
         };
     }
 }
