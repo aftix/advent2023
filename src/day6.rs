@@ -7,7 +7,6 @@ pub(crate) fn ways_to_win(time: i64, record: i64) -> i64 {
     // To win, distance > record
     // time * x - x*2 > record
     // x*2 - time * x + record < 0
-    // det of this is (-time)^2 - 4(1)(record) = time^2 - 4*record
     // x1 = (time - sqrt(time^2 - 4*record))/2
     // x2 = (time + sqrt(time^2 - 4* record))/2
     // Then we win for x in [ceil(x1), floor(x2)]
@@ -22,8 +21,8 @@ pub(crate) fn ways_to_win(time: i64, record: i64) -> i64 {
     // => ceil((time - floor(root))/2) { ceil(-x) = -floor(x) }
     // => (time - floor(root)) - floor((time - floor(root))/2) { n = floor(n/2) + ceil(n/2) }
 
-    let determinate = time.pow(2) - 4 * record;
-    if let Some(root) = determinate.checked_isqrt() {
+    let discriminant = time.pow(2) - 4 * record;
+    if let Some(root) = discriminant.checked_isqrt() {
         // Since isqrt rounds down, root is floor(root) (root is positive)
         // integer division by 2 is floor for positive numerator (rounds down)
         let lower = time - root - (time - root) / 2;
@@ -32,10 +31,10 @@ pub(crate) fn ways_to_win(time: i64, record: i64) -> i64 {
         let range = upper - lower + 1;
 
         // If the quadratic roots are integers, we don't include the endpoints
-        // That occurs when 1) determinate is a perfect square
+        // That occurs when 1) discriminant is a perfect square
         // and 2) time +/- root is even (due to 2 in denominator)
         // (time + root and time - root have the same parity)
-        if root.pow(2) == determinate && (time + root) % 2 == 0 {
+        if root.pow(2) == discriminant && (time + root) % 2 == 0 {
             range - 2
         } else {
             range
