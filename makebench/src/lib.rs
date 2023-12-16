@@ -130,12 +130,12 @@ pub fn make_benches(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
         quote::quote! {
             fn #fn_ident(c: &mut Criterion) {
+                let input_file =
+                    File::open(#input_file).expect(#expect_txt);
+                let buf_read = BufReader::new(input_file);
+                let lines: Vec<String> = buf_read.lines().flatten().collect();
+                let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
                 c.bench_function(#day_txt, |b| {
-                    let input_file =
-                        File::open(#input_file).expect(#expect_txt);
-                    let buf_read = BufReader::new(input_file);
-                    let lines: Vec<String> = buf_read.lines().flatten().collect();
-                    let str_lines: Vec<&str> = lines.iter().map(String::as_str).collect();
                     b.iter(|| advent2023::#fn_ident(black_box(&str_lines)))
                 });
             }

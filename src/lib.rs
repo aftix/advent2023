@@ -370,44 +370,19 @@ pub fn day5p2(input: &[&str]) -> i64 {
 mod day6;
 
 pub fn day6(input: &[&str]) -> i64 {
-    let mut input: Vec<_> = input
-        .par_iter()
-        .map(|&line| parser::day6::parse_line(line).map(|(_, t)| t))
-        .flatten()
-        .collect();
+    let times = parser::day6::parse_line(input[0]).unwrap().1 .1;
+    let records = parser::day6::parse_line(input[1]).unwrap().1 .1;
 
-    let (times, records) = if matches!(input[0].0, RaceLabel::Time) {
-        (
-            input.remove(0).1.into_par_iter(),
-            input.remove(0).1.into_par_iter(),
-        )
-    } else {
-        (
-            input.remove(1).1.into_par_iter(),
-            input.remove(0).1.into_par_iter(),
-        )
-    };
-
-    let vec: Vec<_> = times
-        .zip(records)
+    times
+        .into_iter()
+        .zip(records.into_iter())
         .map(|(time, record)| day6::ways_to_win(time, record))
-        .collect();
-    vec.into_iter().product()
+        .product()
 }
 
 pub fn day6p2(input: &[&str]) -> i64 {
-    let mut input: Vec<_> = input
-        .par_iter()
-        .map(|&line| parser::day6::parse_line(line).map(|(_, t)| t))
-        .flatten()
-        .collect();
-
-    let (times, records) = if matches!(input[0].0, RaceLabel::Time) {
-        (input.remove(0).1, input.remove(0).1)
-    } else {
-        (input.remove(1).1, input.remove(0).1)
-    };
-
+    let times = parser::day6::parse_line(input[0]).unwrap().1 .1;
+    let records = parser::day6::parse_line(input[1]).unwrap().1 .1;
     let fold_fn = |acc: i64, x: i64| {
         if acc == 0 {
             x
@@ -417,6 +392,7 @@ pub fn day6p2(input: &[&str]) -> i64 {
     };
     let time = times.into_iter().fold(0, fold_fn);
     let records = records.into_iter().fold(0, fold_fn);
+
     day6::ways_to_win(time, records)
 }
 
