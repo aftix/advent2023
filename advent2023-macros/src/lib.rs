@@ -1,5 +1,6 @@
 mod makebenches;
 mod maketests;
+mod util;
 
 use proc_macro::TokenStream;
 

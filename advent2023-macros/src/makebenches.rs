@@ -1,10 +1,11 @@
+use crate::util::{parse_block, parse_days, parse_input_path, AccessDays, AccessPath, Day};
+
 use proc_macro2::TokenStream;
 use quote::format_ident;
+use std::collections::HashMap;
 use syn::{
     parse::{Parse, ParseStream, Result},
     parse2,
-    token::{Colon, Comma, Semi},
-    Ident, LitInt, LitStr,
 };
 
 // Make benchmarks for advent of code 2023
@@ -14,103 +15,51 @@ use syn::{
 //   DAYS: [1, 1p2, ...];
 // }
 
-// Day specifier: [12]?[0-9](p2)?
-#[derive(PartialEq, PartialOrd, Eq, Copy, Clone, Debug, Hash)]
-pub struct Day {
-    number: u8,
-    part_two: bool,
-}
-
-impl ToString for Day {
-    fn to_string(&self) -> String {
-        if self.part_two {
-            format!("day{}p2", self.number)
-        } else {
-            format!("day{}", self.number)
-        }
-    }
-}
-
-impl Day {
-    pub fn to_bench_name(&self) -> String {
-        if self.part_two {
-            format!("day {} p2", self.number)
-        } else {
-            format!("day {}", self.number)
-        }
-    }
-}
-
-impl Parse for Day {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let number: LitInt = input.parse()?;
-        let part_two = number.suffix() == "p2";
-        let number: u8 = number.base10_parse()?;
-        Ok(Self { number, part_two })
-    }
-}
-
 pub struct MakeBenches {
     input_path: String,
     days: Vec<Day>,
 }
 
+#[derive(Default)]
+struct ParseData {
+    path: Option<String>,
+    days: Option<Vec<Day>>,
+}
+
+impl AccessDays for ParseData {
+    fn access_days(&mut self) -> &mut Option<Vec<Day>> {
+        &mut self.days
+    }
+}
+
+impl AccessPath for ParseData {
+    fn access_path(&mut self) -> &mut Option<String> {
+        &mut self.path
+    }
+}
+
 impl Parse for MakeBenches {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let mut make_benches = Self {
-            input_path: String::new(),
-            days: vec![],
-        };
+    fn parse(mut input: ParseStream) -> Result<Self> {
+        type MyFn = dyn Fn(&mut ParseStream, &mut ParseData) -> Result<()>;
+        let map: HashMap<_, _> = [
+            ("INPUT_PATH", Box::new(parse_input_path) as Box<MyFn>),
+            ("DAYS", Box::new(parse_days) as Box<MyFn>),
+        ]
+        .into_iter()
+        .map(|(s, f)| (s.into(), f))
+        .collect();
 
-        let mut has_path = false;
-        let mut has_days = false;
+        let parse_state = parse_block(&mut input, map, ParseData::default())?;
 
-        while !input.is_empty() {
-            let ident: Ident = input.parse()?;
-            input.parse::<Colon>()?;
-
-            match ident.to_string().as_str() {
-                "INPUT_PATH" => {
-                    if has_path {
-                        return Err(input.error("INPUT_PATH declared multiple times."));
-                    }
-                    has_path = true;
-
-                    let string: LitStr = input.parse()?;
-                    make_benches.input_path = string.value();
-                    input.parse::<Semi>()?;
-                }
-                "DAYS" => {
-                    if has_days {
-                        return Err(input.error("DAYS declared multiple times."));
-                    }
-                    has_days = true;
-
-                    let content;
-                    syn::bracketed!(content in input);
-
-                    let mut days: Vec<Day> = vec![];
-                    let mut comma = Ok(Comma::default()); // Start out with a phantom comma
-                    while !content.is_empty() {
-                        if let Err(e) = comma {
-                            // If there's more input and the last token wasn't a comma
-                            return Err(e);
-                        }
-                        let day = content.parse()?;
-                        days.push(day);
-                        comma = content.parse();
-                    }
-
-                    make_benches.days = days;
-                    input.parse::<Semi>()?;
-                }
-                _ => {
-                    return Err(input.error("Uknown identifier encountered."));
-                }
-            }
+        if let ParseData {
+            path: Some(input_path),
+            days: Some(days),
+        } = parse_state
+        {
+            Ok(Self { input_path, days })
+        } else {
+            Err(input.error("Missing required fields in make_tests block."))
         }
-
-        Ok(make_benches)
     }
 }
 

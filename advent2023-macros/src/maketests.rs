@@ -1,12 +1,13 @@
-use std::collections::{HashMap, HashSet};
+use crate::util::{parse_block, parse_days, parse_input_path, AccessDays, AccessPath, Day};
 
 use proc_macro2::TokenStream;
 use quote::format_ident;
+use std::collections::{HashMap, HashSet};
 use syn::{
     parse::{Parse, ParseStream, Result},
     parse2,
-    token::{Colon, Comma, FatArrow, Semi},
-    Ident, Lit, LitInt, LitStr,
+    token::{FatArrow, Semi},
+    Lit, LitStr,
 };
 
 // Make tests for advent of code 2023
@@ -23,44 +24,18 @@ use syn::{
 //   };
 // }
 
-// Day specifier: [12]?[0-9](p2)?
-#[derive(PartialEq, PartialOrd, Eq, Copy, Clone, Debug, Hash)]
-struct Day {
-    number: u8,
-    part_two: bool,
-}
-
-impl ToString for Day {
-    fn to_string(&self) -> String {
-        if self.part_two {
-            format!("day{}p2", self.number)
-        } else {
-            format!("day{}", self.number)
-        }
-    }
-}
-
-impl Parse for Day {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let number: LitInt = input.parse()?;
-        let part_two = number.suffix() == "p2";
-        let number: u8 = number.base10_parse()?;
-        Ok(Self { number, part_two })
-    }
-}
-
 // Day override specifier: day => str;
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
-struct DayOverride {
-    day: Day,
-    replacement: String,
+pub struct DayOverride {
+    pub day: Day,
+    pub replacement: String,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
-struct DayOverrides(Vec<DayOverride>);
+#[derive(PartialEq, Eq, Clone, Debug, Hash, Default)]
+pub struct DayOverrides(pub Vec<DayOverride>);
 
 impl DayOverrides {
-    fn get_input_variable_name(&self, mut day: Day) -> String {
+    pub fn get_input_variable_name(&self, mut day: Day) -> String {
         let found = self.0.iter().rfind(|x| x.day == day);
         if let Some(day_override) = found {
             day_override.replacement.to_uppercase()
@@ -70,7 +45,7 @@ impl DayOverrides {
         }
     }
 
-    fn get_input_path(&self, inp_path: &str, mut day: Day) -> String {
+    pub fn get_input_path(&self, inp_path: &str, mut day: Day) -> String {
         let found = self.0.iter().rfind(|x| x.day == day);
         if let Some(day_override) = found {
             format!("{}/{}_ex.dat", inp_path, day_override.replacement)
@@ -101,121 +76,121 @@ struct MakeTests {
     expected: HashMap<Day, Lit>,
 }
 
-impl Parse for MakeTests {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let mut make_tests = Self {
-            input_path: String::new(),
-            days: vec![],
-            overrides: DayOverrides(vec![]),
-            expected: HashMap::new(),
-        };
+#[derive(Default)]
+struct ParseData {
+    input_path: Option<String>,
+    days: Option<Vec<Day>>,
+    overrides: Option<DayOverrides>,
+    expected: Option<HashMap<Day, Lit>>,
+}
 
-        let mut has_input_path = false;
-        let mut has_days = false;
-        let mut has_overrides = false;
-        let mut has_expected = false;
+impl AccessDays for ParseData {
+    fn access_days(&mut self) -> &mut Option<Vec<Day>> {
+        &mut self.days
+    }
+}
 
-        while !input.is_empty() {
-            let ident: Ident = input.parse()?;
-            input.parse::<Colon>()?;
+impl AccessPath for ParseData {
+    fn access_path(&mut self) -> &mut Option<String> {
+        &mut self.input_path
+    }
+}
 
-            match ident.to_string().as_str() {
-                "INPUT_PATH" => {
-                    if has_input_path {
-                        return Err(input.error("INPUT_PATH declared multiple times."));
-                    }
-                    has_input_path = true;
+fn parse_overrides(input: &mut ParseStream, state: &mut ParseData) -> Result<()> {
+    if state.overrides.is_some() {
+        Err(input.error("INPUT_OVERRIDES declared multiple times."))
+    } else {
+        let content;
+        syn::braced!(content in input);
 
-                    let string: LitStr = input.parse()?;
-                    make_tests.input_path = string.value();
-                    input.parse::<Semi>()?;
-                }
-                "DAYS" => {
-                    if has_days {
-                        return Err(input.error("DAYS declared multiple times."));
-                    }
-                    has_days = true;
-
-                    let content;
-                    syn::bracketed!(content in input);
-
-                    let mut days: Vec<Day> = vec![];
-                    let mut comma = Ok(Comma::default()); // Start out with a phantom comma
-                    while !content.is_empty() {
-                        if let Err(e) = comma {
-                            // If there's more input and the last token wasn't a comma
-                            return Err(e);
-                        }
-                        let day = content.parse()?;
-                        days.push(day);
-                        comma = content.parse();
-                    }
-
-                    make_tests.days = days;
-                    input.parse::<Semi>()?;
-                }
-                "INPUT_OVERRIDES" => {
-                    if has_overrides {
-                        return Err(input.error("INPUT_OVERRIDES declared multiple times."));
-                    }
-                    has_overrides = false;
-
-                    let content;
-                    syn::braced!(content in input);
-
-                    let mut replacements: Vec<DayOverride> = vec![];
-                    let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
-                    while !content.is_empty() {
-                        if let Err(e) = semicolon {
-                            // If there's more input and the last token wasn't a semi
-                            return Err(e);
-                        }
-                        let item = content.parse()?;
-                        replacements.push(item);
-                        semicolon = content.parse();
-                    }
-
-                    make_tests.overrides = DayOverrides(replacements);
-                    input.parse::<Semi>()?;
-                }
-                "OUTPUTS" => {
-                    if has_expected {
-                        return Err(input.error("OUTPUTS declared multiple times."));
-                    }
-                    has_expected = true;
-
-                    let content;
-                    syn::braced!(content in input);
-                    let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
-                    while !content.is_empty() {
-                        if let Err(e) = semicolon {
-                            // If there's more input and the last token wasn't a semi
-                            return Err(e);
-                        }
-
-                        let day: Day = content.parse()?;
-                        if make_tests.expected.contains_key(&day) {
-                            return Err(input.error(&format!(
-                                "output declared multiple times for {}",
-                                day.to_string()
-                            )));
-                        }
-
-                        content.parse::<FatArrow>()?;
-
-                        let lit: Lit = content.parse()?;
-                        make_tests.expected.insert(day, lit);
-
-                        semicolon = content.parse();
-                    }
-
-                    input.parse::<Semi>()?;
-                }
-                _ => return Err(input.error("Unknown identifier encountered.")),
+        let mut replacements: Vec<DayOverride> = vec![];
+        let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
+        while !content.is_empty() {
+            if let Err(e) = semicolon {
+                // If there's more input and the last token wasn't a semi
+                return Err(e);
             }
+            let item = content.parse()?;
+            replacements.push(item);
+            semicolon = content.parse();
         }
 
-        Ok(make_tests)
+        state.overrides = Some(DayOverrides(replacements));
+        Ok(())
+    }
+}
+
+fn parse_expected(input: &mut ParseStream, state: &mut ParseData) -> Result<()> {
+    if state.expected.is_some() {
+        Err(input.error("OUTPUTS declared multiple times."))
+    } else {
+        state.expected = Some(HashMap::new());
+        let content;
+        syn::braced!(content in input);
+        let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
+        while !content.is_empty() {
+            if let Err(e) = semicolon {
+                // If there's more input and the last token wasn't a semi
+                return Err(e);
+            }
+
+            let day: Day = content.parse()?;
+            if state
+                .expected
+                .as_ref()
+                .is_some_and(|map| map.contains_key(&day))
+            {
+                return Err(input.error(&format!(
+                    "output declared multiple times for {}",
+                    day.to_string()
+                )));
+            }
+
+            content.parse::<FatArrow>()?;
+
+            let lit: Lit = content.parse()?;
+            if let Some(map) = state.expected.as_mut() {
+                map.insert(day, lit);
+            }
+
+            semicolon = content.parse();
+        }
+
+        Ok(())
+    }
+}
+
+impl Parse for MakeTests {
+    fn parse(mut input: ParseStream) -> Result<Self> {
+        type MyFn = dyn Fn(&mut ParseStream, &mut ParseData) -> Result<()>;
+        let map: HashMap<_, _> = [
+            ("INPUT_PATH", Box::new(parse_input_path) as Box<MyFn>),
+            ("DAYS", Box::new(parse_days) as Box<MyFn>),
+            ("INPUT_OVERRIDES", Box::new(parse_overrides) as Box<MyFn>),
+            ("OUTPUTS", Box::new(parse_expected) as Box<MyFn>),
+        ]
+        .into_iter()
+        .map(|(s, f)| (s.into(), f))
+        .collect();
+
+        let parse_state = parse_block(&mut input, map, ParseData::default())?;
+
+        if let ParseData {
+            input_path: Some(input_path),
+            days: Some(days),
+            overrides,
+            expected: Some(expected),
+        } = parse_state
+        {
+            Ok(MakeTests {
+                input_path,
+                days,
+                overrides: overrides.unwrap_or_else(Default::default),
+                expected,
+            })
+        } else {
+            Err(input.error("Missing required fields in make_tests block."))
+        }
     }
 }
 
