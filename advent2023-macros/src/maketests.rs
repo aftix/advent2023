@@ -106,10 +106,9 @@ fn parse_overrides(input: &mut ParseStream, state: &mut ParseData) -> Result<()>
         let mut replacements: Vec<DayOverride> = vec![];
         let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
         while !content.is_empty() {
-            if let Err(e) = semicolon {
-                // If there's more input and the last token wasn't a semi
-                return Err(e);
-            }
+            // If there's more input and the last token wasn't a semi
+            semicolon?;
+
             let item = content.parse()?;
             replacements.push(item);
             semicolon = content.parse();
@@ -129,10 +128,8 @@ fn parse_expected(input: &mut ParseStream, state: &mut ParseData) -> Result<()> 
         syn::braced!(content in input);
         let mut semicolon = Ok(Semi::default()); // Start out with a phantom semi
         while !content.is_empty() {
-            if let Err(e) = semicolon {
-                // If there's more input and the last token wasn't a semi
-                return Err(e);
-            }
+            // If there's more input and the last token wasn't a semi
+            semicolon?;
 
             let day: Day = content.parse()?;
             if state
@@ -140,7 +137,7 @@ fn parse_expected(input: &mut ParseStream, state: &mut ParseData) -> Result<()> 
                 .as_ref()
                 .is_some_and(|map| map.contains_key(&day))
             {
-                return Err(input.error(&format!(
+                return Err(input.error(format!(
                     "output declared multiple times for {}",
                     day.to_string()
                 )));
@@ -195,7 +192,7 @@ impl Parse for MakeTests {
 }
 
 pub fn make_tests(input: TokenStream) -> TokenStream {
-    let ast: MakeTests = parse2(input.into()).expect("Failed to parse make_tests AST");
+    let ast: MakeTests = parse2(input).expect("Failed to parse make_tests AST");
 
     let mut created_statics: HashSet<String> = HashSet::new();
     ast.days
@@ -236,7 +233,6 @@ pub fn make_tests(input: TokenStream) -> TokenStream {
             }
         })
         .collect::<TokenStream>()
-        .into()
 }
 
 #[cfg(test)]

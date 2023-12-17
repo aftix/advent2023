@@ -23,7 +23,7 @@ impl ToString for Day {
 }
 
 impl Day {
-    pub fn to_bench_name(&self) -> String {
+    pub fn to_bench_name(self) -> String {
         if self.part_two {
             format!("day {} p2", self.number)
         } else {
@@ -63,7 +63,7 @@ pub fn parse_input_path<T: AccessPath>(input: &mut ParseStream, state: &mut T) -
 pub fn parse_days<T: AccessDays>(input: &mut ParseStream, state: &mut T) -> Result<()> {
     let state_days = state.access_days();
     if state_days.is_some() {
-        return Err(input.error("DAYS declared multiple times."));
+        Err(input.error("DAYS declared multiple times."))
     } else {
         let content;
         syn::bracketed!(content in input);
@@ -71,10 +71,9 @@ pub fn parse_days<T: AccessDays>(input: &mut ParseStream, state: &mut T) -> Resu
         let mut days: Vec<Day> = vec![];
         let mut comma = Ok(Comma::default()); // Start out with a phantom comma
         while !content.is_empty() {
-            if let Err(e) = comma {
-                // If there's more input and the last token wasn't a comma
-                return Err(e);
-            }
+            // If there's more input and the last token wasn't a comma
+            comma?;
+
             let day = content.parse()?;
             days.push(day);
             comma = content.parse();

@@ -64,7 +64,7 @@ impl Parse for MakeBenches {
 }
 
 pub fn make_benches(input: TokenStream) -> TokenStream {
-    let ast: MakeBenches = parse2(input.into()).expect("Failed to parse make_benches AST");
+    let ast: MakeBenches = parse2(input).expect("Failed to parse make_benches AST");
 
     let setup = [quote::quote! {
         use std::fs::File;
@@ -105,9 +105,5 @@ pub fn make_benches(input: TokenStream) -> TokenStream {
         criterion_main! { benches }
     }];
 
-    setup
-        .into_iter()
-        .chain(ast_iter.into_iter())
-        .chain(ending.into_iter())
-        .collect()
+    setup.into_iter().chain(ast_iter).chain(ending).collect()
 }

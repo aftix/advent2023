@@ -108,7 +108,7 @@ impl Parse for MakeFunc {
                 }
                 has_output = true;
                 output = o.output;
-            } else if matches!(input.fork().parse::<NoOkay>(), Ok(_)) {
+            } else if input.fork().parse::<NoOkay>().is_ok() {
                 input.parse::<NoOkay>().unwrap();
                 if no_ok {
                     return Err(input.error("NO_OKAY specified multiple times"));
