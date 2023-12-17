@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{char, digit1, one_of},
+    character::complete::char,
     combinator::peek,
     error::{Error, ErrorKind},
     sequence::terminated,
@@ -45,20 +45,64 @@ pub fn parse_spelled_digit(input: &str) -> IResult<&str, i64> {
 }
 
 pub fn parse_literal_digit(input: &str) -> IResult<&str, i64> {
-    let (rest, num) = one_of("123456789")(input)?;
-    match num.to_digit(10) {
-        Some(num) => Ok((rest, num as i64)),
-        None => Err(nom::Err::Error(Error::new(rest, ErrorKind::Digit))),
+    if input.is_empty() {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Digit)));
     }
+
+    let zero = 48;
+    let nine = 57;
+
+    let digit: u8 = unsafe {
+        input
+            .chars()
+            .next()
+            .unwrap_unchecked()
+            .try_into()
+            .unwrap_unchecked()
+    };
+
+    if digit < zero || digit > nine {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Digit)));
+    }
+    let rest = unsafe { input.get_unchecked(1..) };
+    Ok((rest, (digit - zero) as i64))
 }
 
 pub fn parse_int(input: &str) -> IResult<&str, i64> {
-    let (rest, num) = digit1(input)?;
-
-    match num.parse() {
-        Ok(num) => Ok((rest, num)),
-        Err(_) => Err(nErr::Error(Error::new(rest, ErrorKind::Digit))),
+    if input.is_empty() {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Digit)));
     }
+
+    let zero = 48;
+    let nine = 57;
+
+    let mut chars = input.chars();
+    let first: u8 = unsafe {
+        chars
+            .next()
+            .unwrap_unchecked()
+            .try_into()
+            .unwrap_unchecked()
+    };
+    if first < zero || first > nine {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Digit)));
+    }
+
+    let mut taken = 1;
+    let mut accum = (first - zero) as i64;
+
+    for digit in chars {
+        let digit_ascii: u8 = unsafe { digit.try_into().unwrap_unchecked() };
+        if digit_ascii < zero || digit_ascii > nine {
+            break;
+        }
+        taken += 1;
+        accum *= 10;
+        accum += (digit_ascii - zero) as i64;
+    }
+
+    let rest = unsafe { input.get_unchecked(taken..) };
+    Ok((rest, accum))
 }
 
 pub fn parse_digit(input: &str) -> IResult<&str, i64> {

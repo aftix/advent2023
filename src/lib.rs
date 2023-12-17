@@ -1,6 +1,7 @@
 #![feature(iterator_try_collect)]
 #![feature(iter_array_chunks)]
 #![feature(isqrt)]
+#![feature(ascii_char)]
 // Advent of Code 2023 utility lib
 
 use parser::day4;
