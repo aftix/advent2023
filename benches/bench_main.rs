@@ -1,4 +1,4 @@
-use makebench::make_benches;
+use advent2023_macros::make_benches;
 
 make_benches! {
     INPUT_PATH: "bench_inputs";

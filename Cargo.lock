@@ -6,12 +6,21 @@ version = 3
 name = "advent2023"
 version = "0.1.0"
 dependencies = [
+ "advent2023-macros",
  "clap 4.4.11",
  "criterion",
- "makebench",
- "maketest",
  "nom",
  "rayon",
+ "test-case",
+]
+
+[[package]]
+name = "advent2023-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
  "test-case",
 ]
 
@@ -366,25 +375,6 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
-
-[[package]]
-name = "makebench"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "maketest"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "test-case",
-]
 
 [[package]]
 name = "memchr"

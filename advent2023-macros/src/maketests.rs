@@ -219,8 +219,7 @@ impl Parse for MakeTests {
     }
 }
 
-#[proc_macro]
-pub fn make_tests(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn make_tests(input: TokenStream) -> TokenStream {
     let ast: MakeTests = parse2(input.into()).expect("Failed to parse make_tests AST");
 
     let mut created_statics: HashSet<String> = HashSet::new();
@@ -267,7 +266,7 @@ pub fn make_tests(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 #[cfg(test)]
 mod test {
-    use crate::{DayOverrides, MakeTests};
+    use super::{DayOverrides, MakeTests};
 
     use super::{Day, DayOverride};
     use proc_macro2::TokenStream;

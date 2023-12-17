@@ -1,3 +1,4 @@
+use proc_macro2::TokenStream;
 use quote::format_ident;
 use syn::{
     parse::{Parse, ParseStream, Result},
@@ -15,7 +16,7 @@ use syn::{
 
 // Day specifier: [12]?[0-9](p2)?
 #[derive(PartialEq, PartialOrd, Eq, Copy, Clone, Debug, Hash)]
-struct Day {
+pub struct Day {
     number: u8,
     part_two: bool,
 }
@@ -31,7 +32,7 @@ impl ToString for Day {
 }
 
 impl Day {
-    fn to_bench_name(&self) -> String {
+    pub fn to_bench_name(&self) -> String {
         if self.part_two {
             format!("day {} p2", self.number)
         } else {
@@ -49,7 +50,7 @@ impl Parse for Day {
     }
 }
 
-struct MakeBenches {
+pub struct MakeBenches {
     input_path: String,
     days: Vec<Day>,
 }
@@ -113,8 +114,7 @@ impl Parse for MakeBenches {
     }
 }
 
-#[proc_macro]
-pub fn make_benches(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn make_benches(input: TokenStream) -> TokenStream {
     let ast: MakeBenches = parse2(input.into()).expect("Failed to parse make_benches AST");
 
     let setup = [quote::quote! {
@@ -160,6 +160,5 @@ pub fn make_benches(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .into_iter()
         .chain(ast_iter.into_iter())
         .chain(ending.into_iter())
-        .map(Into::<proc_macro::TokenStream>::into)
         .collect()
 }

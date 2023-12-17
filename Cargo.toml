@@ -1,4 +1,4 @@
-workspace = { members = [ "makebench","maketest"] }
+workspace = { members = ["advent2023-macros"] }
 
 [package]
 name = "advent2023"
@@ -18,8 +18,7 @@ nom = "^7.1"
 [dev-dependencies]
 criterion = {version="^0.4", features=["html_reports"]}
 test-case = "^3.3"
-maketest = {path="./maketest"}
-makebench = {path="./makebench"}
+advent2023-macros = {path="./advent2023-macros"}
 
 [lib]
 bench = false

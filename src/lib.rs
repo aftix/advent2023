@@ -401,7 +401,7 @@ pub fn day6p2(input: &[&str]) -> i64 {
 
 #[cfg(test)]
 mod test {
-    use maketest::make_tests;
+    use advent2023_macros::make_tests;
 
     make_tests! {
         INPUT_PATH: "../inputs";
