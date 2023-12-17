@@ -1,5 +1,8 @@
-use crate::util::{parse_block, parse_days, parse_input_path, AccessDays, AccessPath, Day};
+use crate::util::{
+    parse_block, parse_days, parse_input_path, AccessDays, AccessPath, Day, IdentMap,
+};
 
+use phf::phf_map;
 use proc_macro2::TokenStream;
 use quote::format_ident;
 use std::collections::{HashMap, HashSet};
@@ -157,20 +160,16 @@ fn parse_expected(input: &mut ParseStream, state: &mut ParseData) -> Result<()> 
     }
 }
 
+static KEYWORDS: IdentMap<ParseData> = phf_map! {
+    "INPUT_PATH" => parse_input_path,
+    "DAYS" => parse_days,
+    "INPUT_OVERRIDES" => parse_overrides,
+    "OUTPUTS" => parse_expected,
+};
+
 impl Parse for MakeTests {
     fn parse(mut input: ParseStream) -> Result<Self> {
-        type MyFn = dyn Fn(&mut ParseStream, &mut ParseData) -> Result<()>;
-        let map: HashMap<_, _> = [
-            ("INPUT_PATH", Box::new(parse_input_path) as Box<MyFn>),
-            ("DAYS", Box::new(parse_days) as Box<MyFn>),
-            ("INPUT_OVERRIDES", Box::new(parse_overrides) as Box<MyFn>),
-            ("OUTPUTS", Box::new(parse_expected) as Box<MyFn>),
-        ]
-        .into_iter()
-        .map(|(s, f)| (s.into(), f))
-        .collect();
-
-        let parse_state = parse_block(&mut input, map, ParseData::default())?;
+        let parse_state = parse_block(&mut input, &KEYWORDS, ParseData::default())?;
 
         if let ParseData {
             input_path: Some(input_path),

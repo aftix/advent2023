@@ -1,9 +1,11 @@
-use std::collections::HashMap;
+use phf::Map;
 use syn::{
     parse::{Parse, ParseStream, Result},
     token::{Colon, Comma, Semi},
     Ident, LitInt, LitStr,
 };
+
+pub type IdentMap<T> = Map<&'static str, fn(&mut ParseStream, &mut T) -> Result<()>>;
 
 // Day specifier: [12]?[0-9](p2)?
 #[derive(PartialEq, PartialOrd, Eq, Copy, Clone, Debug, Hash)]
@@ -86,10 +88,7 @@ pub fn parse_days<T: AccessDays>(input: &mut ParseStream, state: &mut T) -> Resu
 
 // Parse a block of IDENT: <anything>; using a map of IDENT -> parsers
 // parses the following semicolon as well, parser shouldn't
-pub fn parse_block<T, F>(input: &mut ParseStream, map: HashMap<String, F>, mut init: T) -> Result<T>
-where
-    F: Fn(&mut ParseStream, &mut T) -> Result<()>,
-{
+pub fn parse_block<T>(input: &mut ParseStream, map: &IdentMap<T>, mut init: T) -> Result<T> {
     while !input.is_empty() {
         let ident: Ident = input.parse()?;
         input.parse::<Colon>()?;
