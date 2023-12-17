@@ -375,7 +375,7 @@ pub fn day6(input: &[&str]) -> i64 {
 
     times
         .into_iter()
-        .zip(records.into_iter())
+        .zip(records)
         .map(|(time, record)| day6::ways_to_win(time, record))
         .product()
 }
