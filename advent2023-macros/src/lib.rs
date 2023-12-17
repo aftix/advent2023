@@ -1,4 +1,5 @@
 mod makebenches;
+mod makefunc;
 mod maketests;
 mod util;
 
@@ -12,4 +13,9 @@ pub fn make_tests(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn make_benches(input: TokenStream) -> TokenStream {
     makebenches::make_benches(input.into()).into()
+}
+
+#[proc_macro]
+pub fn make_func(input: TokenStream) -> TokenStream {
+    makefunc::make_func(input.into()).into()
 }

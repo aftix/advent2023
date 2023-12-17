@@ -4,7 +4,7 @@
 #![feature(ascii_char)]
 // Advent of Code 2023 utility lib
 
-use parser::day4;
+use advent2023_macros::make_func;
 use rayon::prelude::*;
 use std::{collections::HashSet, ops::Range};
 
@@ -15,64 +15,35 @@ use types::Day5;
 
 // Solutions
 
-mod day1 {
-    pub(super) fn parse_line(input: &str) -> i64 {
-        let zero = 48;
-        let nine = 57;
+make_func! {
+    1;
+    NO_OKAY;
+    { input.sum() }
+}
 
-        let mut number = 0;
+make_func! {
+    1p2;
+    PARSER: 1p2;
+    NO_OKAY;
+    { input.sum() }
+}
 
-        for ch in input.chars() {
-            let digit: u8 = unsafe { ch.try_into().unwrap_unchecked() };
-            if digit < zero || digit > nine {
-                continue;
-            }
-            number = (digit - zero) as i64;
-            break;
-        }
+make_func! {
+    2;
+    {
+        const NUM_RED: i64 = 12;
+        const NUM_GREEN: i64 = 13;
+        const NUM_BLUE: i64 = 14;
 
-        for ch in input.chars().rev() {
-            let digit: u8 = unsafe { ch.try_into().unwrap_unchecked() };
-            if digit < zero || digit > nine {
-                continue;
-            }
-            number *= 10;
-            number += (digit - zero) as i64;
-            break;
-        }
-
-        number
+        input
+            .map(|(_, game)| game)
+            .filter(|game| {
+                game.sets
+                    .par_iter()
+                    .find_any(|set| set.red > NUM_RED || set.green > NUM_GREEN || set.blue > NUM_BLUE)
+                    .is_none()
+            }).map(|game| game.id).sum()
     }
-}
-
-pub fn day1(input: &[&str]) -> i64 {
-    input.par_iter().map(|line| day1::parse_line(line)).sum()
-}
-
-pub fn day1p2(input: &[&str]) -> i64 {
-    input
-        .par_iter()
-        .map(|line| parser::day1::parse_line(line))
-        .sum()
-}
-
-pub fn day2(input: &[&str]) -> i64 {
-    const NUM_RED: i64 = 12;
-    const NUM_GREEN: i64 = 13;
-    const NUM_BLUE: i64 = 14;
-
-    input
-        .into_par_iter()
-        .map(|line| parser::day2::parse_line(line).ok().map(|(_, game)| game))
-        .flatten()
-        .filter(|game| {
-            game.sets
-                .par_iter()
-                .find_any(|set| set.red > NUM_RED || set.green > NUM_GREEN || set.blue > NUM_BLUE)
-                .is_none()
-        })
-        .map(|game| game.id)
-        .sum()
 }
 
 mod day2p2 {
@@ -97,13 +68,14 @@ mod day2p2 {
     }
 }
 
-pub fn day2p2(input: &[&str]) -> i64 {
-    input
-        .into_par_iter()
-        .map(|line| parser::day2::parse_line(line).ok().map(|(_, game)| game))
-        .flatten()
-        .map(day2p2::get_power)
-        .sum()
+make_func! {
+    2p2;
+    {
+        input
+            .map(|(_, game)| game)
+            .map(day2p2::get_power)
+            .sum()
+    }
 }
 
 mod day3 {
@@ -231,32 +203,34 @@ fn get_winners((_id, winners, cards): &(u32, Vec<i64>, Vec<i64>)) -> usize {
     cards.iter().filter(|num| winners.contains(num)).count()
 }
 
-pub fn day4(input: &[&str]) -> i64 {
-    input
-        .par_iter()
-        .map(|&line| day4::parse_line(line).map(|(_, tuple)| tuple))
-        .flatten()
-        .map(|x| get_winners(&x))
-        .map(|num_winners| {
-            if num_winners == 0 {
-                0
-            } else {
-                1 << (num_winners - 1)
-            }
-        })
-        .sum()
+make_func! {
+    4;
+    {
+        input
+            .map(|(_, tuple)| tuple)
+            .map(|x| get_winners(&x))
+            .map(|num_winners| {
+                if num_winners == 0 {
+                    0
+                } else {
+                    1 << (num_winners - 1)
+                }
+            })
+            .sum()
+    }
 }
 
 mod day4p2;
 
-pub fn day4p2(input: &[&str]) -> i64 {
-    let cards: Vec<_> = input
-        .par_iter()
-        .map(|&line| day4::parse_line(line).map(|(_, tuple)| tuple))
-        .flatten()
-        .collect();
+make_func! {
+    4p2;
+    {
+        let cards: Vec<_> = input
+            .map(|(_, tuple)| tuple)
+            .collect();
 
-    day4p2::Day4p2::new(&cards).map(|(num, _)| num as i64).sum()
+        day4p2::Day4p2::new(&cards).map(|(num, _)| num as i64).sum()
+    }
 }
 
 pub fn day5(input: &[&str]) -> i64 {

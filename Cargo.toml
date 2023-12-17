@@ -11,6 +11,7 @@ edition = "2021"
 clap = {version="^4.4", features=["derive"]}
 nom = "^7.1"
 rayon = "^1.8"
+advent2023-macros = {path="./advent2023-macros"}
 
 [build-dependencies]
 nom = "^7.1"
@@ -18,7 +19,6 @@ nom = "^7.1"
 [dev-dependencies]
 criterion = {version="^0.4", features=["html_reports"]}
 test-case = "^3.3"
-advent2023-macros = {path="./advent2023-macros"}
 
 [lib]
 bench = false
