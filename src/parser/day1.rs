@@ -10,11 +10,11 @@ pub fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
     Ok((rest, digit))
 }
 
-pub fn parse_line(input: &str) -> IResult<&str, i64> {
-    let (_, first_digit) = parse_glob_then_digit(input)?;
-    let (_, second_digit) = many1(parse_glob_then_digit)(input)?;
-    let second_digit = second_digit.last().unwrap();
-    Ok(("", first_digit * 10 + second_digit))
+pub fn parse_line(input: &str) -> i64 {
+    let (_, digits) = unsafe { many1(parse_glob_then_digit)(input).unwrap_unchecked() };
+    let first_digit = unsafe { *digits.get_unchecked(0) };
+    let second_digit = unsafe { *digits.get_unchecked(digits.len() - 1) };
+    first_digit * 10 + second_digit
 }
 
 #[cfg(test)]

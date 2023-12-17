@@ -16,39 +16,43 @@ use types::Day5;
 // Solutions
 
 mod day1 {
-    use crate::parser::parse_literal_digit;
-    use nom::{
-        character::complete::alpha0,
-        multi::{many1, many_till},
-        IResult,
-    };
+    pub(super) fn parse_line(input: &str) -> i64 {
+        let zero = 48;
+        let nine = 57;
 
-    fn parse_glob_then_digit(input: &str) -> IResult<&str, i64> {
-        let (rest, (_, digit)) = many_till(alpha0, parse_literal_digit)(input)?;
-        Ok((rest, digit))
-    }
+        let mut number = 0;
 
-    pub(super) fn parse_line(input: &str) -> IResult<&str, i64> {
-        let (_, first_digit) = parse_glob_then_digit(input)?;
-        let (_, second_digit) = many1(parse_glob_then_digit)(input)?;
-        let second_digit = second_digit.last().unwrap();
-        Ok(("", first_digit * 10 + second_digit))
+        for ch in input.chars() {
+            let digit: u8 = unsafe { ch.try_into().unwrap_unchecked() };
+            if digit < zero || digit > nine {
+                continue;
+            }
+            number = (digit - zero) as i64;
+            break;
+        }
+
+        for ch in input.chars().rev() {
+            let digit: u8 = unsafe { ch.try_into().unwrap_unchecked() };
+            if digit < zero || digit > nine {
+                continue;
+            }
+            number *= 10;
+            number += (digit - zero) as i64;
+            break;
+        }
+
+        number
     }
 }
 
 pub fn day1(input: &[&str]) -> i64 {
-    input
-        .par_iter()
-        .map(|line| day1::parse_line(line).ok().map(|(_, num)| num))
-        .flatten()
-        .sum()
+    input.par_iter().map(|line| day1::parse_line(line)).sum()
 }
 
 pub fn day1p2(input: &[&str]) -> i64 {
     input
         .par_iter()
-        .map(|line| parser::day1::parse_line(line).ok().map(|(_, num)| num))
-        .flatten()
+        .map(|line| parser::day1::parse_line(line))
         .sum()
 }
 
