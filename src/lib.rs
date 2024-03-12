@@ -373,13 +373,32 @@ pub fn day6p2(input: &[&str]) -> i64 {
     day6::ways_to_win(time, records)
 }
 
+mod day7;
+
+make_func! {
+    7;
+    {
+        let mut handbids: Vec<_> = input
+            .map(|(_, handbid)| handbid)
+            .filter_map(|(s, bid)|
+                if let Ok(handtype) = day7::HandType::try_from(s) {
+                    Some((handtype, bid))
+                } else {
+                    None
+                })
+            .collect();
+        handbids.sort_by_key(|&(handtype, _)| handtype);
+        handbids.into_par_iter().enumerate().map(|(rank, (_, bid))| (rank as i64 + 1) * bid).sum()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use advent2023_macros::make_tests;
 
     make_tests! {
         INPUT_PATH: "../inputs";
-        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2, 6, 6p2];
+        DAYS: [1, 1p2, 2, 2p2, 3, 3p2, 4, 4p2, 5, 5p2, 6, 6p2, 7];
         INPUT_OVERRIDES: {
             1p2 => "day1p2";
         };
@@ -396,6 +415,7 @@ mod test {
             5p2 => 46;
             6 => 288;
             6p2 => 71503;
+            7 => 6440;
         };
     }
 }
