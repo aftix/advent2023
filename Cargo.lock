@@ -18,7 +18,6 @@ dependencies = [
 name = "advent2023-macros"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "phf",
  "proc-macro2",
  "quote",

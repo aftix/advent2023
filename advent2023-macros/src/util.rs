@@ -14,12 +14,12 @@ pub struct Day {
     pub part_two: bool,
 }
 
-impl ToString for Day {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for Day {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.part_two {
-            format!("day{}p2", self.number)
+            write!(f, "day{}p2", self.number)
         } else {
-            format!("day{}", self.number)
+            write!(f, "day{}", self.number)
         }
     }
 }
