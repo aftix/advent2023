@@ -54,7 +54,7 @@ impl DayOverrides {
             format!("{}/{}_ex.dat", inp_path, day_override.replacement)
         } else {
             day.part_two = false;
-            format!("{}/{}_ex.dat", inp_path, day.to_string())
+            format!("{}/{}_ex.dat", inp_path, day)
         }
     }
 }
@@ -142,7 +142,7 @@ fn parse_expected(input: &mut ParseStream, state: &mut ParseData) -> Result<()> 
             {
                 return Err(input.error(format!(
                     "output declared multiple times for {}",
-                    day.to_string()
+                    day,
                 )));
             }
 
